@@ -653,6 +653,7 @@ function save(){
 function applyDefaults(){
   if(!DB.weeks) DB.weeks={};
   if(!DB.foundation) DB.foundation={};
+  migrateFoundation();
   if(!DB.contracts) DB.contracts=[];
   if(!DB.self_concept) DB.self_concept=[];
   autofillFoundation(false);   // vul automatisch aan uit reeds bekende app-data (alleen lege velden)
@@ -1799,34 +1800,15 @@ const FOUNDATION_LAYERS=[
      {k:"energy", label:"Energie — wanneer het meest? wat zuigt weg? wat geeft terug?", ph:"…"},
      {k:"env", label:"Omgeving & middelen — waar wel/niet, wat verstoort focus?", ph:"Plekken, stoorzenders en de middelen die je hebt"}
    ]},
-  {key:"architectuur", icon:"⚙️", title:"3 · Architectuur — de gedragsinfrastructuur",
-   why:"Het hart van Discipline as Engineering™: hier ontwerp je hoe gedrag automatisch wordt, los van wilskracht.",
+  {key:"systeem", icon:"⚙️", title:"3 · Systeem — hoe gedrag automatisch wordt",
+   why:"Het hart van Discipline as Engineering™: ontwerp je omgeving en triggers zó dat het juiste gedrag vanzelf gaat — los van wilskracht. De concrete, reproduceerbare handelingen zíjn je daden: ontwerp ze onder Ontwerp › Mijn daden en koppel ze als bewijs in je contract.",
    fields:[
      {k:"triggers", label:"Triggers — wat start het gedrag? (tijd / context / emotie)", ph:"Bijv. 07:30 ochtendactivatie · laptop sluiten = beweging · stress = 2-min reset"},
      {k:"interfaces", label:"Interfaces — hoe maak je de eerste stap <10 seconden?", ph:"Wat ligt klaar? Bijv. tas klaar om 09:00, schema en muziek vooraf ingesteld"},
      {k:"friction", label:"Friction design — wat maak je makkelijker / moeilijker?", ph:"Laag: kleding op vaste plek. Hoog: geen social media voor 13:30"},
-     {k:"failsafe", label:"Fail-safes — wat doe je als motivatie wegvalt? (minimumprotocol)", ph:"Bijv. geen gym → thuis Level 1 · tijdgebrek → 8-min Tabata · emotie → box breathing + 20 squats"}
-   ]},
-  {key:"procedures", icon:"📋", title:"4 · Procedures — reproduceerbaar gedrag",
-   why:"Procedures zorgen voor consistent gedrag, zelfs op slechte dagen. Maak ze zó simpel dat ze altijd uitvoerbaar zijn.",
-   fields:[
-     {k:"morning", label:"Ochtendroutine", ph:"Bijv. 10 ademhalingen · 10 squats · intentie"},
-     {k:"pre", label:"Pre-training / pre-werk routine", ph:"De aanloop die je in de modus zet…"},
-     {k:"evening", label:"Avond / herstel", ph:"Bijv. mobiliteit · koude douche · dankbaarheid"},
-     {k:"minimum", label:"Minimumtraining / -protocol (altijd haalbaar)", ph:"De kleinste versie die nog telt — zodat je nooit een 0-dag hebt"}
-   ]},
-  {key:"monitoring", icon:"📊", title:"5 · Monitoring — meten is weten",
-   why:"Gevoel is onbetrouwbaar; data niet. Monitoring laat zien of het systeem werkt.",
-   fields:[
-     {k:"kpis", label:"Welke KPI's meet je? (eenvoudig, meetbaar, realistisch)", ph:"Bijv. sessies per week · energie voor/na · stressniveau · slaapkwaliteit"}
-   ],
-   note:"Je tracker meet al automatisch: completion, streaks, energie, diep werk en slaap — zie het Dashboard."},
-  {key:"iteratie", icon:"🔄", title:"6 · Iteratie — het levend systeem",
-   why:"Discipline moet meebewegen met het leven. Iteratie voorkomt systeemverval — verbeter elke week één element.",
-   fields:[
-     {k:"weekly", label:"Iteratie: waar brak het, welke constraint veranderde, wat moet simpeler of geautomatiseerd?", ph:"Eén verbetering per week is genoeg…"}
-   ],
-   note:"Doe dit wekelijks onder Instrumenten › Weekreview (wins · obstakels · aanpassing)."}
+     {k:"routines", label:"Vaste routines & minimumprotocol (de kleinste versie die altijd telt)", ph:"Ochtend · aanloop · avond — en het minimum zodat je nooit een 0-dag hebt"},
+     {k:"failsafe", label:"Fail-safes — wat doe je als motivatie wegvalt?", ph:"Bijv. geen gym → thuis Level 1 · tijdgebrek → 8-min Tabata · emotie → box breathing + 20 squats"}
+   ]}
 ];
 function foundationFilled(){
   let c=0;
@@ -1855,13 +1837,32 @@ function renderFoundation(){
       card.appendChild(lab); card.appendChild(ta);
     });
     if(L.note){ const n=document.createElement("p"); n.className="sub"; n.style.margin="10px 0 0"; n.textContent="ℹ️ "+L.note; card.appendChild(n); }
-    if(L.key==="procedures") appendHabitDerivation(card);
-    if(L.key==="monitoring") appendMonitoringReadout(card);
     wrap.appendChild(card);
   });
+  const moc=document.createElement("div"); moc.className="card";
+  moc.innerHTML='<h2 style="margin:0 0 2px">📊 Monitoring — meten is weten</h2><p class="sub">Gevoel is onbetrouwbaar; data niet. Je systeem meet zichzelf al automatisch — completion, streaks, energie, diep werk en slaap — in je <b>Samenvatting</b> onder Instrumenten. Geen apart veld nodig.</p>';
+  wrap.appendChild(moc);
+  const itc=document.createElement("div"); itc.className="card";
+  itc.innerHTML='<h2 style="margin:0 0 2px">🔄 Iteratie — het levend systeem</h2><p class="sub">Discipline moet meebewegen met het leven. Je systeem itereert niet hier in een veld, maar in de praktijk: je <b>wekelijkse review</b> onder Instrumenten › Weekreview. Eén verbetering per week is genoeg.</p>';
+  wrap.appendChild(itc);
   updateFoundationProgress();
 }
 
+function migrateFoundation(){
+  const f=DB.foundation; if(!f) return; let changed=false;
+  // Architectuur → Systeem (behoud bestaande systeem-tekst)
+  ["triggers","interfaces","friction","failsafe"].forEach(function(k){
+    const old="architectuur."+k, nw="systeem."+k;
+    if(f[old]!==undefined){ if(!f[nw]||!String(f[nw]).trim()) f[nw]=f[old]; delete f[old]; changed=true; }
+  });
+  // Procedures → Systeem › routines (samenvoegen, niets weggooien)
+  const pk=[["morning","Ochtend"],["pre","Aanloop"],["evening","Avond & herstel"],["minimum","Minimumprotocol"]];
+  const parts=[];
+  pk.forEach(function(p){ const v=f["procedures."+p[0]]; if(v&&String(v).trim()) parts.push(p[1]+": "+String(v).trim()); });
+  if(parts.length){ const ex=(f["systeem.routines"]||"").trim(); f["systeem.routines"]=(ex?ex+"\n":"")+parts.join("\n"); changed=true; }
+  ["morning","pre","evening","minimum"].forEach(function(k){ if(f["procedures."+k]!==undefined){ delete f["procedures."+k]; changed=true; } });
+  if(changed) save();
+}
 /* Fundament automatisch aanvullen uit reeds bekende app-data */
 function shortName(n){ return (n||"").split(":")[0].trim(); }
 function foundationAutofillMap(){
@@ -1869,23 +1870,19 @@ function foundationAutofillMap(){
   // 1 · Missie — uit Identiteit
   if(id.become) out["missie.identity"]=id.become;
   if(id.values) out["missie.beyond"]=id.values;
-  // 3 · Architectuur — uit je gewoonten (Vier Wetten)
+  // 3 · Systeem — uit je daden (Vier Wetten)
   const habits=(DB.habits||[]).filter(function(h){return h.name&&h.name.trim();});
   const cues=habits.filter(function(h){return h.cue&&h.cue.trim();}).map(function(h){return shortName(h.name)+": "+h.cue.trim();});
-  if(cues.length) out["architectuur.triggers"]=cues.join("\n");
+  if(cues.length) out["systeem.triggers"]=cues.join("\n");
   const easies=habits.filter(function(h){return h.easy&&h.easy.trim();}).map(function(h){return shortName(h.name)+": "+h.easy.trim();});
-  if(easies.length) out["architectuur.interfaces"]=easies.join("\n");
+  if(easies.length) out["systeem.interfaces"]=easies.join("\n");
   const attr=habits.filter(function(h){return h.attractive&&h.attractive.trim();}).map(function(h){return shortName(h.name)+": "+h.attractive.trim();});
-  if(attr.length) out["architectuur.friction"]="Laagfrictie (koppelingen):\n"+attr.join("\n");
-  // 4 · Procedures — gewoonten gegroepeerd op tijdstip
+  if(attr.length) out["systeem.friction"]="Laagfrictie (koppelingen):\n"+attr.join("\n");
+  // Routines — daden gegroepeerd op tijdstip
   function pick(rx){ return habits.filter(function(h){ return rx.test(h.name||""); }).map(function(h){ return (h.easy&&h.easy.trim())?h.easy.trim():shortName(h.name); }); }
-  const morn=pick(/ochtend|opstaan|morning/i); if(morn.length) out["procedures.morning"]=morn.join("\n");
-  const eve=pick(/avond|evening/i); if(eve.length) out["procedures.evening"]=eve.join("\n");
-  // 5 · Monitoring — wat de tracker feitelijk al meet
-  out["monitoring.kpis"]="Gewoonten-completion · huidige streak · energie (1–5) · diep werk (min) · slaap & slaapkwaliteit";
-  // 6 · Iteratie — laatste ingevulde weekreview
-  const wk=DB.weeks||{}, keys=Object.keys(wk).sort();
-  for(let i=keys.length-1;i>=0;i--){ const w=wk[keys[i]]; if(w&&(w.adj||w.obst||w.wins)){ const p=[]; if(w.adj)p.push("Aanpassing: "+w.adj); if(w.obst)p.push("Obstakel: "+w.obst); if(w.wins)p.push("Win: "+w.wins); out["iteratie.weekly"]=p.join("\n"); break; } }
+  const mornArr=pick(/ochtend|opstaan|morning/i); const eveArr=pick(/avond|evening/i);
+  const routines=[]; if(mornArr.length) routines.push("Ochtend: "+mornArr.join(" · ")); if(eveArr.length) routines.push("Avond: "+eveArr.join(" · "));
+  if(routines.length) out["systeem.routines"]=routines.join("\n");
   return out;
 }
 function autofillFoundation(force){
@@ -1911,7 +1908,7 @@ const PROC_MAP=[
   {k:"evening", name:"Avond & herstel"},
   {k:"minimum", name:"Minimumprotocol"}
 ];
-function foundationCue(){ return (DB.foundation["architectuur.triggers"]||"").trim(); }
+function foundationCue(){ return (DB.foundation["systeem.triggers"]||DB.foundation["architectuur.triggers"]||"").trim(); }
 function foundationIdentity(){ return (DB.foundation["missie.oneliner"]||DB.foundation["missie.identity"]||(DB.identity&&DB.identity.become)||"").trim(); }
 function habitFromFoundationExists(key){ return DB.habits.some(function(h){ return h.foundationKey===key; }); }
 function habitLinkedTo(key){ return DB.habits.filter(function(h){ return h.foundationKey===key; })[0]; }
