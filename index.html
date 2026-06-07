@@ -93,7 +93,19 @@
   .seg button.on{background:var(--accent);border-color:var(--accent);color:#241405}
   /* per-gewoonte streak in lijst */
   .hstreak{margin-left:auto;font-size:12.5px;color:var(--accent2);font-weight:800;flex:0 0 auto;align-self:center;white-space:nowrap}
-  /* mis-nooit-twee-keer melding */
+  /* Ritueel (identiteitscontract) */
+  .ritual{background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line)}
+  .ritual .rq{font-size:11.5px;color:var(--accent);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+  .ritual .rstate{font-size:19px;line-height:1.45;font-weight:600;color:var(--ink);margin:8px 0 14px}
+  .ract{display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:13px;background:var(--bg2);border:1px solid var(--line);margin:8px 0;cursor:pointer;user-select:none;transition:.15s}
+  .ract:active{transform:scale(.99)}
+  .ract.cast{border-color:var(--good);background:linear-gradient(90deg,rgba(94,196,138,.14),var(--bg2))}
+  .ract .rcheck{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:transparent;font-size:14px;transition:.15s}
+  .ract.cast .rcheck{background:var(--good);border-color:var(--good);color:#0f211e}
+  .ract .rn{font-size:14.5px;font-weight:600}
+  .rvotes{font-size:13px;color:var(--soft);margin-top:12px}
+  .rvotes b{color:var(--accent2)}
+  .contract-sig{font-size:12px;color:var(--muted);margin-top:6px;font-style:italic}
   .miss{background:linear-gradient(90deg,rgba(240,185,120,.16),var(--card2));border:1px solid var(--accent);border-radius:14px;padding:13px 14px;margin:0 0 12px;display:flex;gap:11px;align-items:flex-start;box-shadow:var(--shadow)}
   .miss .mi{font-size:21px;line-height:1;flex:0 0 auto}
   .miss .mt{flex:1;font-size:13px;color:var(--soft)}
@@ -144,6 +156,20 @@
   .celebrate-rank{font-size:14px;color:var(--soft);margin-bottom:22px}
   .celebrate-rank .cel-new{color:var(--good);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1px}
   .celebrate-box button{width:100%;background:var(--accent);color:#241405;border:0;border-radius:13px;padding:13px;font-size:15px;font-weight:800;cursor:pointer}
+  /* Onboarding & manifest */
+  .onboard-overlay{position:fixed;inset:0;z-index:90;background:linear-gradient(180deg,var(--bg),var(--bg2));display:none;overflow-y:auto;padding:calc(28px + env(safe-area-inset-top)) 0 40px}
+  .onboard-overlay.show{display:block;animation:fade .3s ease}
+  .onboard-box{max-width:520px;margin:0 auto;padding:0 24px}
+  .onboard-box .ob-kicker{font-size:11.5px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-weight:700}
+  .onboard-box h1{font-size:26px;line-height:1.25;margin:10px 0 0;color:var(--ink)}
+  .onboard-box .ob-manifest{font-size:15.5px;line-height:1.7;color:var(--soft);margin:18px 0}
+  .onboard-box .ob-manifest b{color:var(--ink)}
+  .onboard-box label.fl{margin-top:16px}
+  .onboard-box .ob-actpick{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  .onboard-box .ob-act{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer}
+  .onboard-box .ob-act.on{border-color:var(--good);background:linear-gradient(90deg,rgba(94,196,138,.12),var(--card))}
+  .onboard-box .ob-primary{width:100%;background:var(--accent);color:#241405;border:0;border-radius:13px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;margin-top:18px}
+  .onboard-box .ob-skip{display:block;width:100%;background:none;border:0;color:var(--muted);font-size:13px;cursor:pointer;margin-top:12px;padding:6px}
 
   /* print report (opslaan als PDF) */
   #printReport{display:none}
@@ -221,6 +247,7 @@
 
 <!-- ============ VANDAAG ============ -->
 <section class="tab active" id="tab-today">
+  <div id="ritualHero"></div>
   <div class="card" id="dateCard">
     <div class="cardhead"><h2 style="margin:0" id="dateCardTitle">Vandaag invullen</h2>
       <button class="iconbtn" id="todayBtn" onclick="goToday()" style="display:none">↩︎ Vandaag</button></div>
@@ -248,13 +275,13 @@
 
   <div class="card" id="affirmCard">
     <div class="cardhead"><h2 style="margin:0">Affirmatie van vandaag</h2>
-      <button class="iconbtn" onclick="speakAffirmation()">🔊 Lees voor</button></div>
+      <div style="display:flex;gap:6px"><button class="iconbtn" onclick="regenAffirm()">↻ Nieuwe</button><button class="iconbtn" onclick="speakAffirmation()">🔊</button></div></div>
     <p class="affirm-text" id="affirmText"></p>
     <div class="affirm-nav">
       <button onclick="cycleAffirmation(-1)">‹ Vorige</button>
       <button onclick="cycleAffirmation(1)">Volgende ›</button>
     </div>
-    <p class="sub" style="margin:10px 0 0">Gericht op je identiteit, gewoonten en jaardoelen. Bewerk ze op het tabblad Identiteit.</p>
+    <p class="sub" id="affirmStatus" style="margin:10px 0 0">Gericht op je identiteit, gewoonten en jaardoelen. Bewerk ze of zet AI aan op het tabblad Identiteit.</p>
   </div>
 
   <div id="missTwice"></div>
@@ -391,6 +418,12 @@
 
 <!-- ============ IDENTITEIT & GEWOONTEN ============ -->
 <section class="tab" id="tab-id">
+  <div class="section-label">Identiteitscontract</div>
+  <div class="card" id="contractCard"></div>
+
+  <div class="section-label">De Spiegel ✨</div>
+  <div class="card" id="mirrorCard"></div>
+
   <div class="section-label">Herinnering</div>
   <div class="card" id="reminderCard">
     <h2>Dagelijkse herinnering</h2>
@@ -445,6 +478,9 @@
   <div class="section-label">Affirmaties</div>
   <div class="card" id="affirmEditCard"></div>
 
+  <div class="section-label">AI-affirmaties ✨</div>
+  <div class="card" id="aiCard"></div>
+
   <div class="section-label">Mijn sleutelgewoonten — de Vier Wetten</div>
   <div id="habitDefs"></div>
 </section>
@@ -468,6 +504,7 @@
 </section>
 
 <div class="foottools">
+  <button onclick="openManifest()">📜 Manifest</button>
   <button onclick="exportData()">⬇︎ Back-up exporteren</button>
   <button onclick="document.getElementById('imp').click()">⬆︎ Importeren</button>
   <input type="file" id="imp" accept="application/json" style="display:none" onchange="importData(event)">
@@ -478,6 +515,8 @@
 </div>
 
 </main>
+
+<div id="onboard" class="onboard-overlay"><div class="onboard-box" id="onboardBox"></div></div>
 
 <div id="celebrate" class="celebrate-overlay">
   <div class="celebrate-box">
@@ -561,6 +600,8 @@ const SEED = {
   },
   weeks:{},
   foundation:{},
+  contracts:[],
+  self_concept:[],
   settings:{reminderOn:false, reminderTime:"20:00", lastReminded:"", email:"vefinanceconsulting@gmail.com", weeklyOn:false, weeklyDay:0, weeklyTime:"18:00", lastWeekly:"", sleepGoal:7}
 };
 
@@ -614,12 +655,15 @@ function save(){
 function applyDefaults(){
   if(!DB.weeks) DB.weeks={};
   if(!DB.foundation) DB.foundation={};
+  if(!DB.contracts) DB.contracts=[];
+  if(!DB.self_concept) DB.self_concept=[];
   autofillFoundation(false);   // vul automatisch aan uit reeds bekende app-data (alleen lege velden)
   if(!DB.settings) DB.settings={reminderOn:false, reminderTime:"20:00", lastReminded:"", email:"vefinanceconsulting@gmail.com"};
   if(DB.settings.email===undefined) DB.settings.email="vefinanceconsulting@gmail.com";
   if(DB.settings.weeklyOn===undefined){ DB.settings.weeklyOn=false; DB.settings.weeklyDay=0; DB.settings.weeklyTime="18:00"; DB.settings.lastWeekly=""; }
   if(!DB.affirmations) DB.affirmations = JSON.parse(JSON.stringify(SEED.affirmations));
   if(DB.settings.sleepGoal===undefined) DB.settings.sleepGoal=7;
+  if(!DB.settings.ai) DB.settings.ai={on:false, key:"", model:"claude-haiku-4-5-20251001", count:6, cache:null};
   // streak-status init: synchroniseer stil met huidige voortgang zodat bestaande streaks niet opnieuw gevierd worden
   if(DB.settings.bestStreak===undefined) DB.settings.bestStreak=currentStreak();
   if(DB.settings.lastCelebratedStreak===undefined) DB.settings.lastCelebratedStreak=currentStreak();
@@ -673,7 +717,7 @@ function mondayOf(d){ const x=new Date(d); const day=(x.getDay()+6)%7; x.setDate
 /* ---------- Computations ---------- */
 function activeHabits(){ return DB.habits.filter(h=>h.name && h.name.trim()); }
 function dayLog(date){
-  if(!DB.logs[date]) DB.logs[date]={habits:{}, energy:0, deep:0, prio:["","",""], good:"", better:"", tomorrow:"", note:"", sleepBed:"", sleepWake:"", sleepQuality:0};
+  if(!DB.logs[date]) DB.logs[date]={habits:{}, energy:0, deep:0, prio:["","",""], good:"", better:"", tomorrow:"", note:"", evidence:"", sleepBed:"", sleepWake:"", sleepQuality:0};
   return DB.logs[date];
 }
 
@@ -706,7 +750,7 @@ function dayRate(dateKey){ const n=dayPlanned(dateKey); return n? dayDoneSchedul
 function anyHabitDone(dateKey){ const l=DB.logs[dateKey]; if(!l||!l.habits) return 0; return activeHabits().filter(function(h){return l.habits[h.id];}).length; }
 function isLogged(date){
   const l=DB.logs[date]; if(!l) return false;
-  return anyHabitDone(date)>0 || (l.deep>0) || (l.energy>0) || l.good || l.better || l.tomorrow || l.note || l.sleepBed || l.sleepWake || l.prio.some(p=>p);
+  return anyHabitDone(date)>0 || (l.deep>0) || (l.energy>0) || l.good || l.better || l.tomorrow || l.note || l.evidence || l.sleepBed || l.sleepWake || l.prio.some(p=>p);
 }
 /* "rest" = niets gepland (breekt niet), "done" = ≥1 gepland gedaan, "broken" = gepland maar niets gedaan */
 function dayHolds(dateKey){
@@ -750,6 +794,7 @@ function renderHello(){
 }
 function renderToday(){
   renderDateBar();
+  renderRitual();
   const l=dayLog(activeDate);
   const list=document.getElementById("habitList"); list.innerHTML="";
   const all=activeHabits();
@@ -826,7 +871,7 @@ function renderMissTwice(){
   for(let i=2;i<=14;i++){ const d=new Date(); d.setDate(d.getDate()-i); if(dayHolds(iso(d))==="done"){ priorActive=true; break; } }
   if(!priorActive) return;
   const el=document.createElement("div"); el.className="miss";
-  el.innerHTML='<div class="mi">🛟</div><div class="mt"><b>Mis nooit twee keer</b>Gisteren stond er niets — en dat is oké, één keer is menselijk. Eén gewoonte vandaag afvinken houdt je systeem heel.</div><button class="miss-x" onclick="dismissMiss()" aria-label="Sluiten">✕</button>';
+  el.innerHTML='<div class="mi">🧭</div><div class="mt"><b>Blijf in karakter</b>Gisteren stond je bewijs stil — en dat is oké, één keer is menselijk. Eén daad vandaag houdt je in lijn met wie je kiest te zijn.</div><button class="miss-x" onclick="dismissMiss()" aria-label="Sluiten">✕</button>';
   box.appendChild(el);
 }
 function dismissMiss(){ if(!DB.settings) DB.settings={}; DB.settings.missDismissed=TODAY; save(); renderMissTwice(); }
@@ -951,29 +996,23 @@ function updateStreakProgress(){
 }
 function renderRankBadge(){
   const el=document.getElementById("rankBadge"); if(!el) return;
-  const r=rankFor(DB.settings.bestStreak||0);
-  el.textContent = r.icon+" "+rankLabel(r);
+  el.style.display="none";   // stil: geen medailles op het Vandaag-scherm
 }
 function showCelebration(st, msg, r, rankUpgraded){
-  document.getElementById("celIcon").textContent = r.icon||"🔥";
-  document.getElementById("celStreak").textContent = "🔥 "+st+" dagen op rij";
-  document.getElementById("celMsg").textContent = msg;
-  document.getElementById("celRank").innerHTML = (rankUpgraded? "<span class='cel-new'>Nieuwe status!</span><br>" : "Status: ")+r.icon+" "+esc(rankLabel(r));
-  document.getElementById("celebrate").classList.add("show");
+  // Stil en waardig: geen pop-up, geen confetti — alleen een rustige bevestiging.
+  toast(st+" dagen in karakter");
 }
-function closeCelebrate(){ document.getElementById("celebrate").classList.remove("show"); }
+function closeCelebrate(){ const el=document.getElementById("celebrate"); if(el) el.classList.remove("show"); }
 function renderRankCard(){
   const c=document.getElementById("rankCard"); if(!c) return;
-  const best=DB.settings.bestStreak||0; const cur=currentStreak(); const r=rankFor(best);
-  let html='<div style="display:flex;align-items:center;gap:14px">';
-  html+='<div style="font-size:42px;line-height:1">'+r.icon+'</div>';
-  html+='<div><div style="font-size:12px;color:var(--muted)">Jouw status</div>';
-  html+='<div style="font-size:21px;font-weight:800;color:var(--accent2)">'+esc(rankLabel(r))+'</div>';
-  html+='<div style="font-size:12px;color:var(--soft)">Langste streak: '+best+' dagen · nu '+cur+'</div></div></div>';
-  if(r.next){
-    const prog=Math.max(0,Math.min(1,(best-r.min)/(r.next.min-r.min))); const left=r.next.min-best;
-    html+='<div class="bar" style="margin-top:16px"><div class="bl"><span>Volgende: '+esc(r.next.name)+'</span><span>nog '+left+' '+(left===1?'dag':'dagen')+'</span></div><div class="track"><div class="fill" style="width:'+(prog*100)+'%"></div></div></div>';
-  }
+  const best=DB.settings.bestStreak||0; const cur=currentStreak();
+  let line;
+  if(cur===0 && best===0) line="Je reis begint bij de eerste dag in karakter.";
+  else if(cur===0) line="Even stil geweest. Eén dag in karakter brengt je terug — je langste reeks was "+best+" dagen.";
+  else line="Je bent <b style='color:var(--accent2)'>"+cur+"</b> "+(cur===1?"dag":"dagen")+" in karakter.";
+  let html='<div class="rq" style="color:var(--accent);font-size:11.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase">In karakter</div>';
+  html+='<p style="font-size:16px;line-height:1.5;color:var(--ink);font-weight:600;margin:6px 0 4px">'+line+'</p>';
+  if(best>0) html+='<p class="sub" style="margin:0">Langste reeks: '+best+' '+(best===1?'dag':'dagen')+'. Consistentie is je enige bewijs — geen ranglijst, geen publiek.</p>';
   c.innerHTML=html;
 }
 
@@ -1096,6 +1135,7 @@ function showDayDetail(key){
     if(l.good) refl.push(["Wat ging goed",l.good]);
     if(l.better) refl.push(["Wat kon beter",l.better]);
     if(l.tomorrow) refl.push(["Morgen anders",l.tomorrow]);
+    if(l.evidence) refl.push(["Bewijs",l.evidence]);
     if(l.note) refl.push(["Dagboek",l.note]);
     refl.forEach(function(p){ html+='<div class="qa"><div class="q">'+esc(p[0])+'</div><div class="a">'+esc(p[1])+'</div></div>'; });
     html+='<button class="addbtn" onclick="editDay(\''+key+'\')" style="margin-top:10px">Bewerk deze dag →</button>';
@@ -1211,6 +1251,7 @@ function buildWeekSummary(weekKey){
     if(l.good) parts.push("goed: "+l.good);
     if(l.better) parts.push("beter: "+l.better);
     if(l.tomorrow) parts.push("morgen anders: "+l.tomorrow);
+    if(l.evidence) parts.push("bewijs: "+l.evidence);
     if(l.note) parts.push("dagboek: "+l.note);
     if(parts.length) refl.push(DAYS[d.getDay()]+" "+d.getDate()+"/"+(d.getMonth()+1)+" — "+parts.join(" | "));
   });
@@ -1231,23 +1272,101 @@ function emailSummary(){
 
 /* ---------- Affirmaties ---------- */
 let affirmIndex=0, affirmInit=false;
+let aiState={loading:false, error:"", triedDate:""};
 function dayOfYear(d){ const s=new Date(d.getFullYear(),0,0); return Math.floor((d-s)/86400000); }
+function aiCfg(){ return (DB.settings && DB.settings.ai) || {}; }
+function aiEnabled(){ const c=aiCfg(); return !!(c.on && c.key && c.key.trim()); }
+function hashStr(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))|0; } return String(h); }
+function currentSig(){ return hashStr(buildAffirmContext()+"|"+(aiCfg().count||6)); }
+function aiCacheToday(){ const c=aiCfg(); return (c.cache && c.cache.date===TODAY && c.cache.sig===currentSig() && Array.isArray(c.cache.items) && c.cache.items.length)? c.cache.items : null; }
+function currentAffirmations(){ const ai=aiCacheToday(); return (aiEnabled() && ai)? ai : (DB.affirmations||[]); }
 function renderAffirmations(){
-  const arr=DB.affirmations||[];
-  const t=document.getElementById("affirmText");
-  if(!t) return;
-  if(!arr.length){ t.textContent="Voeg affirmaties toe op het tabblad Identiteit."; return; }
+  const t=document.getElementById("affirmText"); if(!t) return;
+  const s=document.getElementById("affirmStatus");
+  const arr=currentAffirmations();
+  if(s){
+    if(aiState.loading){ s.textContent="✨ Nieuwe affirmaties worden gegenereerd…"; s.style.color="var(--accent2)"; }
+    else if(aiState.error){ s.textContent="⚠️ "+aiState.error+" — je vaste set wordt getoond."; s.style.color="var(--bad)"; }
+    else if(aiEnabled() && aiCacheToday()){ s.textContent="✨ AI-affirmaties van vandaag, op basis van je gewoonten & fundament."; s.style.color="var(--muted)"; }
+    else if(aiEnabled()){ s.textContent="✨ AI staat aan — tik op ↻ Nieuwe voor een verse set."; s.style.color="var(--muted)"; }
+    else { s.textContent="Gericht op je identiteit, gewoonten en jaardoelen. Bewerk ze of zet AI aan op het tabblad Identiteit."; s.style.color="var(--muted)"; }
+  }
+  if(aiState.loading && !arr.length){ t.textContent="✨ Even geduld…"; return; }
+  if(!arr.length){ t.textContent="Voeg affirmaties toe op het tabblad Identiteit."; maybeAutoGenerate(); return; }
   if(!affirmInit){ affirmIndex = dayOfYear(new Date()) % arr.length; affirmInit=true; }
   affirmIndex=((affirmIndex%arr.length)+arr.length)%arr.length;
   t.textContent=arr[affirmIndex];
+  maybeAutoGenerate();
 }
-function cycleAffirmation(dir){ const arr=DB.affirmations||[]; if(!arr.length) return; affirmInit=true; affirmIndex+=dir; renderAffirmations(); }
+function cycleAffirmation(dir){ const arr=currentAffirmations(); if(!arr.length) return; affirmInit=true; affirmIndex+=dir; renderAffirmations(); }
 function speakAffirmation(){
   if(typeof speechSynthesis==="undefined"){ toast("Voorlezen niet ondersteund op dit toestel"); return; }
   if(speechSynthesis.speaking){ speechSynthesis.cancel(); return; }
-  const arr=DB.affirmations||[]; if(!arr.length) return;
+  const arr=currentAffirmations(); if(!arr.length) return;
   arr.forEach(function(a){ const u=new SpeechSynthesisUtterance(a); u.lang="nl-NL"; u.rate=0.9; speechSynthesis.speak(u); });
   toast("Affirmaties worden voorgelezen");
+}
+function regenAffirm(){ if(!aiEnabled()){ toast("Zet AI-affirmaties eerst aan bij Identiteit ✨"); return; } generateAffirmations(true); }
+function maybeAutoGenerate(){
+  if(!aiEnabled()) return;
+  if(aiCacheToday()) return;
+  if(aiState.loading) return;
+  if(aiState.triedDate===TODAY && aiState.triedSig===currentSig()) return;   // al geprobeerd voor déze context
+  generateAffirmations(false);
+}
+function buildAffirmContext(){
+  const id=DB.identity||{}, f=DB.foundation||{}; const parts=[];
+  if(id.become) parts.push("Wie ik word: "+id.become);
+  if(id.values) parts.push("Kernwaarden: "+id.values);
+  const habits=activeHabits();
+  if(habits.length){ parts.push("Sleutelgewoonten: "+habits.map(function(h){ return shortName(h.name)+(h.identity?(" (\""+h.identity+"\")"):""); }).join("; ")); }
+  if(f["missie.oneliner"]) parts.push("Sturende missie-zin: "+f["missie.oneliner"]);
+  if(f["missie.identity"] && !id.become) parts.push("Toekomstige zelf: "+f["missie.identity"]);
+  if(f["missie.beyond"]) parts.push("Belangrijker dan tijdelijke emoties: "+f["missie.beyond"]);
+  return parts.join("\n");
+}
+function buildAffirmPrompt(n){
+  const ctx=buildAffirmContext();
+  return "Je bent een coach die korte, krachtige dagelijkse affirmaties schrijft in het Nederlands.\n"+
+    "Schrijf "+n+" affirmaties. Elke affirmatie: eerste persoon (begin met 'Ik'), tegenwoordige tijd, positief geformuleerd, maximaal ongeveer 18 woorden, concreet en geworteld in onderstaand profiel. Vermijd clich\u00e9s en herhaling; varieer de invalshoek (identiteit, gewoonten, rust, grenzen, groei).\n\n"+
+    "PROFIEL:\n"+(ctx||"(geen extra context beschikbaar)")+"\n\n"+
+    "Antwoord UITSLUITEND met een geldige JSON-array van strings, zonder uitleg en zonder markdown. Voorbeeld: [\"Ik ...\", \"Ik ...\"]";
+}
+function parseAffirmList(text){
+  if(!text) return [];
+  text=text.replace(/```json/gi,"").replace(/```/g,"").trim();
+  function clean(a){ return a.map(String).map(function(s){return s.trim();}).filter(Boolean).slice(0,12); }
+  try{ const a=JSON.parse(text); if(Array.isArray(a)) return clean(a); }catch(_){}
+  const m=text.match(/\[[\s\S]*\]/); if(m){ try{ const a=JSON.parse(m[0]); if(Array.isArray(a)) return clean(a); }catch(_){} }
+  return text.split("\n").map(function(s){return s.replace(/^[\-*\d.\s"]+/,"").replace(/["，,]+$/,"").trim();}).filter(function(s){return s.length>3;}).slice(0,12);
+}
+async function generateAffirmations(force){
+  if(!aiEnabled()){ toast("Zet AI-affirmaties eerst aan bij Identiteit"); return; }
+  if(aiState.loading) return;
+  const c=aiCfg(); const sig=currentSig();
+  aiState.loading=true; aiState.error=""; aiState.triedDate=TODAY; aiState.triedSig=sig; renderAffirmations(); renderAiSettings();
+  const n=Math.min(12, Math.max(3, c.count||6));
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{ "content-type":"application/json", "x-api-key":c.key.trim(), "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
+      body:JSON.stringify({ model:(c.model||"claude-haiku-4-5-20251001"), max_tokens:1000, messages:[{role:"user", content:buildAffirmPrompt(n)}] })
+    });
+    if(!res.ok){ let m="API-fout "+res.status; try{ const e=await res.json(); if(e&&e.error&&e.error.message) m=e.error.message; }catch(_){} throw new Error(m); }
+    const data=await res.json();
+    const text=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("\n").trim();
+    const items=parseAffirmList(text);
+    if(!items.length) throw new Error("Geen affirmaties ontvangen");
+    if(!DB.settings.ai) DB.settings.ai={};
+    DB.settings.ai.cache={date:TODAY, items:items, sig:sig};
+    aiState.loading=false; aiState.error=""; affirmInit=false; save();
+    renderAffirmations(); renderAiSettings();
+    toast("✨ Nieuwe affirmaties");
+  }catch(err){
+    aiState.loading=false;
+    aiState.error=(err&&err.message)? String(err.message).slice(0,140) : "Kon niet genereren";
+    renderAffirmations(); renderAiSettings();
+  }
 }
 let editAffirm=false;
 function startEditAffirm(){ editAffirm=true; renderAffirmEditor(); }
@@ -1523,7 +1642,35 @@ function renderHabitDefs(){
   }
 }
 
-function renderIdentityTab(){ renderIdentityCard(); renderGoalsCard(); renderAffirmEditor(); renderHabitDefs(); renderReminderUI(); }
+function renderIdentityTab(){ renderContractCard(); renderMirror(); renderIdentityCard(); renderGoalsCard(); renderAffirmEditor(); renderAiSettings(); renderHabitDefs(); renderReminderUI(); }
+function renderAiSettings(){
+  const c=document.getElementById("aiCard"); if(!c) return;
+  const a=(DB.settings.ai)||(DB.settings.ai={on:false,key:"",model:"claude-haiku-4-5-20251001",count:6,cache:null});
+  c.innerHTML="";
+  const tg=document.createElement("div"); tg.className="toggle";
+  tg.innerHTML='<span style="font-size:14px;font-weight:600">AI-affirmaties aan</span>';
+  const sw=document.createElement("label"); sw.className="switch"; const inp=document.createElement("input"); inp.type="checkbox"; inp.checked=!!a.on; const sl=document.createElement("span"); sl.className="slider"; sw.appendChild(inp); sw.appendChild(sl); tg.appendChild(sw);
+  inp.addEventListener("change",function(e){ a.on=e.target.checked; save(); renderAiSettings(); affirmInit=false; renderAffirmations(); });
+  c.appendChild(tg);
+  c.insertAdjacentHTML("beforeend",'<p class="sub">Laat Claude dagelijks nieuwe affirmaties schrijven op basis van je sleutelgewoonten en fundament. De set ververst ook automatisch zodra je je gewoonten of fundament aanpast. Werkt met je eigen Anthropic API-sleutel, die <b>alleen lokaal op dit toestel</b> wordt bewaard en rechtstreeks naar Anthropic gaat (niet via een server). Zonder sleutel of bij een fout val je automatisch terug op je vaste affirmaties hieronder.</p>');
+  const kl=document.createElement("label"); kl.className="fl"; kl.textContent="Anthropic API-sleutel"; c.appendChild(kl);
+  const ki=document.createElement("input"); ki.type="password"; ki.placeholder="sk-ant-…"; ki.value=a.key||""; ki.autocomplete="off"; ki.autocapitalize="off"; ki.spellcheck=false; c.appendChild(ki);
+  ki.addEventListener("input",function(e){ a.key=e.target.value.trim(); save(); });
+  c.insertAdjacentHTML("beforeend",'<p class="sub" style="margin:6px 0 0">Aanmaken via console.anthropic.com → API Keys. Kosten zijn minimaal: met Haiku een paar honderd tokens per dag. De sleutel wordt niet meegenomen in je back-up-export.</p>');
+  const ml=document.createElement("label"); ml.className="fl"; ml.textContent="Model"; c.appendChild(ml);
+  const ms=document.createElement("select");
+  [["claude-haiku-4-5-20251001","Haiku 4.5 — snel & goedkoop (aanbevolen)"],["claude-sonnet-4-6","Sonnet 4.6 — rijker"],["claude-opus-4-8","Opus 4.8 — best, duurder"]].forEach(function(o){ const op=document.createElement("option"); op.value=o[0]; op.textContent=o[1]; if((a.model||"claude-haiku-4-5-20251001")===o[0]) op.selected=true; ms.appendChild(op); });
+  ms.addEventListener("change",function(e){ a.model=e.target.value; save(); }); c.appendChild(ms);
+  const cl=document.createElement("label"); cl.className="fl"; cl.textContent="Aantal affirmaties per dag"; c.appendChild(cl);
+  const ci=document.createElement("input"); ci.type="number"; ci.min="3"; ci.max="12"; ci.inputMode="numeric"; ci.value=a.count||6; c.appendChild(ci);
+  ci.addEventListener("input",function(e){ a.count=Math.min(12,Math.max(3,parseInt(e.target.value)||6)); save(); });
+  const gen=document.createElement("button"); gen.className="btn-mail"; gen.style.marginTop="12px"; gen.textContent= aiState.loading? "✨ Bezig…" : "✨ Genereer nu";
+  gen.disabled=!!aiState.loading;
+  gen.onclick=function(){ if(!a.on){ a.on=true; save(); } if(!a.key||!a.key.trim()){ toast("Vul eerst je API-sleutel in"); renderAiSettings(); return; } generateAffirmations(true); };
+  c.appendChild(gen);
+  if(aiCacheToday()){ const ok=document.createElement("p"); ok.className="sub"; ok.style.cssText="margin-top:8px;color:var(--good)"; ok.textContent="✓ Set van vandaag staat klaar ("+aiCacheToday().length+" affirmaties)."; c.appendChild(ok); }
+  if(aiState.error){ const er=document.createElement("p"); er.className="sub"; er.style.cssText="margin-top:8px;color:var(--bad)"; er.textContent="⚠️ "+aiState.error; c.appendChild(er); }
+}
 
 /* ---------- Reminder ---------- */
 function renderReminderUI(){
@@ -1859,6 +2006,305 @@ function appendMonitoringReadout(card){
   card.appendChild(wrap);
 }
 
+/* ---------- Identiteitscontract & stemmen (Sprint 1) ---------- */
+function activeContract(){ return (DB.contracts||[]).filter(function(c){return c.active;})[0]||null; }
+function contractActs(c){ if(!c||!c.habitIds) return []; return activeHabits().filter(function(h){ return c.habitIds.indexOf(h.id)>=0; }); }
+function votesFor(c){ if(!c) return 0; const ids=c.habitIds||[]; if(!ids.length) return 0; let n=0;
+  Object.keys(DB.logs).forEach(function(k){ const l=DB.logs[k]; if(l&&l.habits){ ids.forEach(function(id){ if(l.habits[id]) n++; }); } }); return n; }
+function votesToday(c){ if(!c) return 0; const ids=c.habitIds||[]; const l=DB.logs[TODAY]; if(!l||!l.habits) return 0; return ids.filter(function(id){return l.habits[id];}).length; }
+function signContract(statement, name){
+  statement=(statement||"").trim();
+  if(statement.length<6){ toast("Schrijf eerst je identiteit uit"); return; }
+  (DB.contracts||[]).forEach(function(c){ c.active=false; });
+  DB.contracts.push({ id:"ct"+Date.now(), statement:statement, signedBy:(name||"").trim(), signedAt:new Date().toISOString(), active:true, habitIds:[], history:[] });
+  save(); toast("Getekend ✓ — je bent begonnen"); renderContractCard(); renderRitual();
+}
+function reviseContract(c, statement){
+  statement=(statement||"").trim(); if(statement.length<6){ toast("Schrijf eerst je identiteit uit"); return; }
+  if(c.statement && c.statement!==statement){ c.history=c.history||[]; c.history.push({statement:c.statement, until:new Date().toISOString()}); }
+  c.statement=statement; c.signedAt=new Date().toISOString();
+  save(); toast("Opnieuw getekend ✓"); renderContractCard(); renderRitual();
+}
+function newContract(){ if(confirm("Nieuw contract starten?\n\nJe huidige contract wordt gearchiveerd; je stemmen-historie blijft bewaard.")){ (DB.contracts||[]).forEach(function(c){ c.active=false; }); save(); renderContractCard(); renderRitual(); } }
+function toggleContractAct(c, habitId){ c.habitIds=c.habitIds||[]; const i=c.habitIds.indexOf(habitId); if(i>=0) c.habitIds.splice(i,1); else c.habitIds.push(habitId); save(); renderContractCard(); renderRitual(); }
+function castVote(habitId){
+  const l=dayLog(TODAY); l.habits=l.habits||{}; const wasOn=!!l.habits[habitId];
+  l.habits[habitId]=!wasOn; save();
+  if(!wasOn){ toast("Stem #"+votesFor(activeContract())+" · je wordt het"); }
+  renderToday();
+}
+function renderRitual(){
+  const box=document.getElementById("ritualHero"); if(!box) return; box.innerHTML="";
+  const c=activeContract();
+  if(!c){
+    const card=document.createElement("div"); card.className="card ritual";
+    card.innerHTML='<div class="rq">Begin hier</div><div class="rstate">Je hebt nog geen identiteitscontract. Dit is het hart van je praktijk: verklaar wie je wordt, en elke daad wordt een stem.</div>';
+    const b=document.createElement("button"); b.className="btn-mail"; b.textContent="Stel je contract op →";
+    b.onclick=function(){ switchTab("id"); setTimeout(function(){ const el=document.getElementById("contractCard"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); },80); };
+    card.appendChild(b); box.appendChild(card); return;
+  }
+  if(activeDate!==TODAY) return;   // ritueel alleen voor vandaag
+  const card=document.createElement("div"); card.className="card ritual";
+  card.innerHTML='<div class="rq">Wie kies je vandaag te zijn?</div><div class="rstate">'+esc(c.statement)+'</div>';
+  const acts=contractActs(c); const l=dayLog(TODAY);
+  if(!acts.length){
+    card.insertAdjacentHTML("beforeend",'<p class="sub">Koppel één of twee daden aan dit contract (Identiteit › Identiteitscontract). Elke voltooide daad wordt een stem.</p>');
+  } else {
+    acts.forEach(function(h){
+      const cast=!!(l.habits&&l.habits[h.id]);
+      const el=document.createElement("div"); el.className="ract"+(cast?" cast":"");
+      el.setAttribute("role","button"); el.setAttribute("tabindex","0");
+      el.innerHTML='<div class="rcheck">✓</div><div class="rn">'+esc(shortName(h.name))+'</div>';
+      function go(){ castVote(h.id); }
+      el.onclick=go; el.onkeydown=function(e){ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); go(); } };
+      card.appendChild(el);
+    });
+  }
+  const v=document.createElement("div"); v.className="rvotes";
+  v.innerHTML="<b>"+votesFor(c)+" stemmen</b> voor deze identiteit · vandaag "+votesToday(c)+"/"+acts.length+" bewijs";
+  card.appendChild(v);
+  const ss=contractStrengthSentence(c);
+  if(ss){ const sl=document.createElement("div"); sl.className="sub"; sl.style.margin="6px 0 0"; sl.textContent=ss; card.appendChild(sl); }
+  const lab=document.createElement("label"); lab.className="fl"; lab.textContent="Wat was vandaag je bewijs? (optioneel)";
+  const ti=document.createElement("input"); ti.type="text"; ti.placeholder="Eén zin…"; ti.value=l.evidence||"";
+  ti.addEventListener("input",function(e){ dayLog(TODAY).evidence=e.target.value; save(); });
+  card.appendChild(lab); card.appendChild(ti);
+  box.appendChild(card);
+}
+function renderContractCard(){
+  const cc=document.getElementById("contractCard"); if(!cc) return; cc.innerHTML="";
+  const c=activeContract();
+  if(!c){
+    cc.innerHTML='<h2 style="margin:0 0 4px">Verklaar wie je wordt</h2><p class="sub">Eén identiteit. Bewust gekozen en ondertekend. Vanaf dat moment telt elke gekoppelde daad als een stem vóór deze persoon.</p>';
+    const ta=document.createElement("textarea"); ta.placeholder="Ik ben iemand die…"; ta.value="Ik ben iemand die ";
+    const nl=document.createElement("label"); nl.className="fl"; nl.textContent="Onderteken met je naam";
+    const ni=document.createElement("input"); ni.type="text"; ni.placeholder="Je naam";
+    const b=document.createElement("button"); b.className="btn-mail"; b.style.marginTop="12px"; b.textContent="✎ Onderteken mijn contract";
+    b.onclick=function(){ signContract(ta.value, ni.value); };
+    cc.appendChild(ta); cc.appendChild(nl); cc.appendChild(ni); cc.appendChild(b);
+    return;
+  }
+  cc.innerHTML='<h2 style="margin:0 0 4px">Mijn contract</h2>';
+  const ta=document.createElement("textarea"); ta.value=c.statement||""; ta.style.minHeight="60px"; cc.appendChild(ta);
+  const d=new Date(c.signedAt); const sig=document.createElement("div"); sig.className="contract-sig";
+  sig.textContent="Getekend"+(c.signedBy?(" door "+c.signedBy):"")+" op "+d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear()+" · "+votesFor(c)+" stemmen verzameld";
+  cc.appendChild(sig);
+  const br=document.createElement("div"); br.className="btnrow";
+  const sv=document.createElement("button"); sv.className="btn-save"; sv.textContent="Opnieuw tekenen"; sv.onclick=function(){ reviseContract(c, ta.value); };
+  const nw=document.createElement("button"); nw.className="btn-cancel"; nw.textContent="Nieuw contract"; nw.onclick=newContract;
+  br.appendChild(sv); br.appendChild(nw); cc.appendChild(br);
+  cc.insertAdjacentHTML("beforeend",'<label class="fl">Welke daden zijn bewijs voor deze identiteit?</label>');
+  const acts=activeHabits();
+  if(!acts.length){ cc.insertAdjacentHTML("beforeend",'<p class="sub">Voeg eerst gewoonten toe (hieronder bij sleutelgewoonten); koppel ze daarna hier.</p>'); }
+  acts.forEach(function(h){
+    const on=(c.habitIds||[]).indexOf(h.id)>=0;
+    const row=document.createElement("label"); row.style.cssText="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer";
+    const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=on; cb.style.cssText="width:20px;height:20px;flex:0 0 auto";
+    cb.addEventListener("change",function(){ toggleContractAct(c, h.id); });
+    const t=document.createElement("div"); t.style.cssText="font-size:14px"; t.textContent=shortName(h.name);
+    row.appendChild(cb); row.appendChild(t); cc.appendChild(row);
+  });
+}
+
+/* ---------- De Spiegel (Sprint 2) ---------- */
+let mirrorState={loading:"", error:""};   // loading: "" | "letter" | "evolve"
+async function aiComplete(prompt, maxTokens){
+  const c=aiCfg();
+  if(!c.key||!c.key.trim()) throw new Error("Geen API-sleutel — zet AI aan bij Identiteit");
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{ "content-type":"application/json", "x-api-key":c.key.trim(), "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
+    body:JSON.stringify({ model:(c.model||"claude-haiku-4-5-20251001"), max_tokens:maxTokens||600, messages:[{role:"user", content:prompt}] })
+  });
+  if(!res.ok){ let m="API-fout "+res.status; try{ const e=await res.json(); if(e&&e.error&&e.error.message) m=e.error.message; }catch(_){} throw new Error(m); }
+  const data=await res.json();
+  return (data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("\n").trim();
+}
+function addDaysKey(n){ const d=new Date(); d.setDate(d.getDate()+n); return iso(d); }
+
+/* sterkte & streak van een contract (rustdag-bewust, alleen gekoppelde daden) */
+function contractScheduledCount(c, key){ return contractActs(c).filter(function(h){ return isScheduled(h,key); }).length; }
+function contractDoneCount(c, key){ const l=DB.logs[key]; if(!l||!l.habits) return 0; return contractActs(c).filter(function(h){ return l.habits[h.id]; }).length; }
+function contractStreak(c){
+  let d=new Date(); let s=0;
+  function holds(k){ const p=contractScheduledCount(c,k); if(p===0) return "rest"; return contractDoneCount(c,k)>0?"done":"broken"; }
+  if(holds(iso(d))==="broken") d.setDate(d.getDate()-1);
+  for(let i=0;i<400;i++){ const st=holds(iso(d)); if(st==="broken") break; if(st==="done") s++; d.setDate(d.getDate()-1); }
+  return s;
+}
+function contractStrengthSentence(c){
+  if(!c) return "";
+  const votes=votesFor(c), streak=contractStreak(c);
+  let recent=0, recentSched=0;
+  for(let i=0;i<14;i++){ const k=addDaysKey(-i); recent+=contractDoneCount(c,k); recentSched+=contractScheduledCount(c,k); }
+  const rate=recentSched? recent/recentSched : 0;
+  if(votes===0) return "Nog geen bewijs. Je eerste stem maakt dit echt.";
+  if(streak>=21) return "Deze identiteit staat als een fundament — "+streak+" dagen op rij bevestigd.";
+  if(streak>=7) return "Deze identiteit krijgt vorm — "+streak+" dagen op rij bevestigd.";
+  if(rate>=0.6) return "Je bevestigt deze identiteit consequent. Het bewijs stapelt zich op.";
+  if(rate>0) return "Je begint deze identiteit te bewijzen — houd het ritme vast.";
+  return "Het bewijs is even stil geweest. Eén daad vandaag brengt je terug in karakter.";
+}
+/* wekelijkse stemmen voor de bewijscurve (laatste 10 weken) */
+function weeklyVotes(c, weeks){
+  const out=[]; const thisMon=mondayOf(new Date());
+  for(let w=weeks-1; w>=0; w--){
+    const mon=new Date(thisMon); mon.setDate(thisMon.getDate()-w*7); let n=0;
+    for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); n+=contractDoneCount(c, iso(d)); }
+    out.push(n);
+  }
+  return out;
+}
+/* mini-grafiek */
+function sparkline(vals, color){
+  if(!vals.length) return '<div class="sub">Nog geen data.</div>';
+  const w=280,h=46,pad=4, mx=Math.max(1, Math.max.apply(null,vals));
+  const step=vals.length>1?(w-2*pad)/(vals.length-1):0;
+  const pts=vals.map(function(v,i){ const x=pad+i*step; const y=h-pad-(v/mx)*(h-2*pad); return x.toFixed(1)+","+y.toFixed(1); });
+  let dots=""; pts.forEach(function(p){ const xy=p.split(","); dots+='<circle cx="'+xy[0]+'" cy="'+xy[1]+'" r="2.2" fill="'+color+'"/>'; });
+  return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" style="width:100%;height:46px;display:block">'+
+    '<polyline points="'+pts.join(" ")+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+dots+'</svg>';
+}
+/* self-concept (noordster) */
+function recordSelfConcept(rating){
+  const c=activeContract(); if(!c) return;
+  DB.self_concept=DB.self_concept||[];
+  DB.self_concept=DB.self_concept.filter(function(e){ return !(e.date===TODAY && e.contractId===c.id); });
+  DB.self_concept.push({date:TODAY, contractId:c.id, rating:rating});
+  save(); renderMirror();
+}
+function selfConceptSeries(c){ return (DB.self_concept||[]).filter(function(e){ return e.contractId===c.id; }).sort(function(a,b){ return a.date<b.date?-1:1; }); }
+function selfConceptToday(c){ const e=(DB.self_concept||[]).filter(function(x){ return x.contractId===c.id && x.date===TODAY; })[0]; return e? e.rating : 0; }
+
+/* AI-spiegel */
+function mirrorContext(c){
+  const id=DB.identity||{}, f=DB.foundation||{}; const p=[];
+  p.push("Verklaarde identiteit: \""+c.statement+"\"");
+  if(id.become) p.push("Wie ik word: "+id.become);
+  if(f["missie.oneliner"]) p.push("Missie: "+f["missie.oneliner"]);
+  const acts=contractActs(c); if(acts.length) p.push("Bewijs-daden: "+acts.map(function(h){return shortName(h.name);}).join(", "));
+  p.push("Totaal stemmen (uitgevoerde daden): "+votesFor(c));
+  p.push("Huidige bewijs-streak: "+contractStreak(c)+" dagen");
+  // recente bewijs-zinnen
+  const ev=[]; Object.keys(DB.logs).sort().reverse().forEach(function(k){ const l=DB.logs[k]; if(l&&l.evidence&&ev.length<7) ev.push(k+": "+l.evidence); });
+  if(ev.length) p.push("Recente bewijs-notities:\n- "+ev.join("\n- "));
+  return p.join("\n");
+}
+function contractMirror(c){ if(!c.mirror) c.mirror={futureLetter:"", currentStatement:"", evolvedAt:"", lastSig:""}; return c.mirror; }
+async function generateFutureLetter(c){
+  if(mirrorState.loading) return;
+  mirrorState.loading="letter"; mirrorState.error=""; renderMirror();
+  try{
+    const prompt="Schrijf in het Nederlands een korte, warme maar eerlijke brief (max 140 woorden) van de toekomstige zelf van deze persoon aan wie hij nu is. De toekomstige zelf heeft de onderstaande identiteit volledig belichaamd. Spreek in 'ik' (de toekomstige zelf) en 'jij' (het huidige zelf). Geen clich\u00e9s, geen opsomming — \u00e9\u00e9n doorlopende, persoonlijke brief.\n\nPROFIEL:\n"+mirrorContext(c);
+    const txt=await aiComplete(prompt, 500);
+    contractMirror(c).futureLetter=txt; mirrorState.loading=""; save(); renderMirror(); toast("✨ Brief geschreven");
+  }catch(e){ mirrorState.loading=""; mirrorState.error=(e&&e.message)?String(e.message).slice(0,140):"Mislukt"; renderMirror(); }
+}
+async function evolveStatement(c){
+  if(mirrorState.loading) return;
+  if(votesFor(c)===0){ toast("Verzamel eerst wat bewijs (stemmen)"); return; }
+  mirrorState.loading="evolve"; mirrorState.error=""; renderMirror();
+  try{
+    const prompt="Je bent een eerlijke spiegel, geen cheerleader. Op basis van het bewijs hieronder: herschrijf de identiteitsverklaring van deze persoon zoals die nu, gezien zijn daden, wáár is. Benoem zowel wat het bewijs bevestigt als waar de breuklijn zit (waar hij nog niet consequent is). Max 60 woorden, in het Nederlands, eerste persoon ('Ik ...'). Toon, motiveer niet. Antwoord met alleen de herschreven verklaring, zonder inleiding.\n\nPROFIEL:\n"+mirrorContext(c);
+    const txt=await aiComplete(prompt, 300);
+    const m=contractMirror(c); m.currentStatement=txt; m.evolvedAt=new Date().toISOString();
+    mirrorState.loading=""; save(); renderMirror(); toast("✨ Spiegel bijgewerkt");
+  }catch(e){ mirrorState.loading=""; mirrorState.error=(e&&e.message)?String(e.message).slice(0,140):"Mislukt"; renderMirror(); }
+}
+
+function renderMirror(){
+  const mc=document.getElementById("mirrorCard"); if(!mc) return; mc.innerHTML="";
+  const c=activeContract();
+  if(!c){ mc.innerHTML='<p class="sub">Stel eerst een identiteitscontract op (hierboven). De Spiegel laat dan zien hoe je die identiteit wordt.</p>'; return; }
+  // sterkte
+  mc.insertAdjacentHTML("beforeend",'<div class="rq" style="color:var(--accent);font-size:11.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Identiteitssterkte</div><p style="font-size:16px;line-height:1.5;color:var(--ink);font-weight:600;margin:6px 0 14px">'+esc(contractStrengthSentence(c))+'</p>');
+  // bewijscurve
+  mc.insertAdjacentHTML("beforeend",'<label class="fl" style="margin-top:0">Bewijs over tijd (stemmen per week)</label>'+sparkline(weeklyVotes(c,10), "var(--accent2)"));
+  // self-concept
+  mc.insertAdjacentHTML("beforeend",'<label class="fl">In hoeverre bén je deze persoon al? (1–10)</label>');
+  const row=document.createElement("div"); row.className="energy"; row.style.flexWrap="wrap";
+  const cur=selfConceptToday(c);
+  for(let i=1;i<=10;i++){ const b=document.createElement("button"); b.type="button"; b.textContent=i; b.style.flex="1 0 16%"; if(cur===i) b.className="on";
+    (function(v){ b.onclick=function(){ recordSelfConcept(v); }; })(i); row.appendChild(b); }
+  mc.appendChild(row);
+  const series=selfConceptSeries(c);
+  if(series.length>=2){ mc.insertAdjacentHTML("beforeend",'<label class="fl">Je wordingscurve</label>'+sparkline(series.map(function(e){return e.rating;}), "var(--good)")); }
+  else { mc.insertAdjacentHTML("beforeend",'<p class="sub" style="margin-top:8px">Beoordeel jezelf af en toe (wekelijks is genoeg). De curve laat je transformatie zien — dit is je belangrijkste maatstaf, niet je completion-%.</p>'); }
+
+  // AI-spiegel
+  const m=contractMirror(c);
+  mc.insertAdjacentHTML("beforeend",'<hr style="border:0;border-top:1px solid var(--line);margin:16px 0">');
+  if(!aiEnabled()){
+    mc.insertAdjacentHTML("beforeend",'<p class="sub">✨ Zet AI aan (bij Identiteit › AI-affirmaties) om je toekomst-brief te laten schrijven en je verklaring te laten meegroeien met je bewijs.</p>');
+    return;
+  }
+  // brief
+  mc.insertAdjacentHTML("beforeend",'<div class="section-label" style="margin:0 0 6px">Brief van je toekomstige zelf</div>');
+  if(m.futureLetter){ mc.insertAdjacentHTML("beforeend",'<p style="font-size:14px;line-height:1.6;color:var(--soft);white-space:pre-wrap">'+esc(m.futureLetter)+'</p>'); }
+  const lb=document.createElement("button"); lb.className="iconbtn"; lb.style.marginTop="6px"; lb.disabled=(mirrorState.loading==="letter"); lb.textContent=(mirrorState.loading==="letter")?"✨ Schrijven…":(m.futureLetter?"↻ Herschrijf brief":"✨ Schrijf de brief");
+  lb.onclick=function(){ generateFutureLetter(c); }; mc.appendChild(lb);
+  // evoluerende verklaring (was/wordt)
+  mc.insertAdjacentHTML("beforeend",'<div class="section-label" style="margin:16px 0 6px">Wie je wordt — volgens je bewijs</div>');
+  mc.insertAdjacentHTML("beforeend",'<div class="qa"><div class="q">Je verklaring</div><div class="a">'+esc(c.statement)+'</div></div>');
+  if(m.currentStatement){ mc.insertAdjacentHTML("beforeend",'<div class="qa"><div class="q">Wat je bewijs nu zegt'+(m.evolvedAt?(" · "+new Date(m.evolvedAt).getDate()+" "+MON[new Date(m.evolvedAt).getMonth()]):"")+'</div><div class="a">'+esc(m.currentStatement)+'</div></div>'); }
+  const eb=document.createElement("button"); eb.className="iconbtn"; eb.style.marginTop="6px"; eb.disabled=(mirrorState.loading==="evolve"); eb.textContent=(mirrorState.loading==="evolve")?"✨ Bezig…":"✨ Werk spiegel bij";
+  eb.onclick=function(){ evolveStatement(c); }; mc.appendChild(eb);
+  mc.insertAdjacentHTML("beforeend",'<p class="sub" style="margin-top:8px">Tip: werk de spiegel wekelijks bij — dan zie je je verklaring meegroeien met wie je aan het worden bent.</p>');
+  if(mirrorState.error){ mc.insertAdjacentHTML("beforeend",'<p class="sub" style="color:var(--bad);margin-top:8px">⚠️ '+esc(mirrorState.error)+'</p>'); }
+}
+
+/* ---------- Onboarding & manifest (Sprint 3) ---------- */
+const MANIFEST_LINES=[
+  "Dit is geen habit tracker.",
+  "Het is een private praktijk om — in stilte — de persoon te worden die je hebt besloten te zijn.",
+  "Geen punten. Geen ranglijst. Geen publiek.",
+  "Alleen jij, je woord, en het bewijs dat je levert.",
+  "Je verklaart één identiteit. Je maakt elke dag één daad tot een stem. Zo word je het."
+];
+function manifestHTML(){ return '<div class="ob-manifest">'+MANIFEST_LINES.map(function(l){return '<p style="margin:0 0 10px">'+esc(l)+'</p>';}).join("")+'</div>'; }
+function needsOnboarding(){ return !(DB.settings&&DB.settings.onboarded) && !activeContract() && Object.keys(DB.logs||{}).length<=2; }
+function closeOnboard(){ const o=document.getElementById("onboard"); if(o) o.classList.remove("show"); }
+function openManifest(){
+  const box=document.getElementById("onboardBox"), o=document.getElementById("onboard"); if(!box||!o) return;
+  box.innerHTML='<div class="ob-kicker">Manifest</div><h1>In stilte word je iemand die je respecteert.</h1>'+manifestHTML();
+  const b=document.createElement("button"); b.className="ob-primary"; b.textContent="Sluiten"; b.onclick=closeOnboard; box.appendChild(b);
+  o.classList.add("show"); o.scrollTop=0;
+}
+let onbSel=null;
+function startOnboarding(){
+  const box=document.getElementById("onboardBox"), o=document.getElementById("onboard"); if(!box||!o) return;
+  onbSel=null;
+  box.innerHTML='<div class="ob-kicker">Welkom</div><h1>In stilte word je iemand die je respecteert.</h1>'+manifestHTML()+'<label class="fl">1 · Verklaar wie je wordt</label>';
+  const ta=document.createElement("textarea"); ta.placeholder="Ik ben iemand die…"; ta.value="Ik ben iemand die "; ta.style.minHeight="64px"; box.appendChild(ta);
+  box.insertAdjacentHTML("beforeend",'<label class="fl">2 · Kies één daad als bewijs (optioneel)</label>');
+  const pick=document.createElement("div"); pick.className="ob-actpick";
+  const acts=activeHabits();
+  if(!acts.length){ pick.innerHTML='<p class="sub">Je kunt later daden koppelen via Identiteit.</p>'; }
+  acts.slice(0,6).forEach(function(h){
+    const row=document.createElement("div"); row.className="ob-act"; row.textContent=shortName(h.name);
+    row.onclick=function(){ if(onbSel===h.id){ onbSel=null; row.classList.remove("on"); } else { onbSel=h.id; Array.prototype.forEach.call(pick.children,function(x){ if(x.classList) x.classList.remove("on"); }); row.classList.add("on"); } };
+    pick.appendChild(row);
+  });
+  box.appendChild(pick);
+  box.insertAdjacentHTML("beforeend",'<label class="fl">3 · Onderteken met je naam</label>');
+  const ni=document.createElement("input"); ni.type="text"; ni.placeholder="Je naam"; box.appendChild(ni);
+  const b=document.createElement("button"); b.className="ob-primary"; b.textContent="✎ Onderteken & begin";
+  b.onclick=function(){ finishOnboarding(ta.value, onbSel, ni.value); };
+  box.appendChild(b);
+  const sk=document.createElement("button"); sk.className="ob-skip"; sk.textContent="Later"; sk.onclick=skipOnboarding; box.appendChild(sk);
+  o.classList.add("show"); o.scrollTop=0;
+}
+function finishOnboarding(statement, actId, name){
+  statement=(statement||"").trim();
+  if(statement.length<6){ toast("Schrijf eerst je identiteit uit"); return; }
+  signContract(statement, name);
+  const c=activeContract();
+  if(c && actId){ c.habitIds=c.habitIds||[]; if(c.habitIds.indexOf(actId)<0) c.habitIds.push(actId); }
+  if(!DB.settings) DB.settings={}; DB.settings.onboarded=true; save();
+  closeOnboard(); switchTab("today");
+}
+function skipOnboarding(){ if(!DB.settings) DB.settings={}; DB.settings.onboarded=true; save(); closeOnboard(); }
+
 /* ---------- Tabs ---------- */
 const TITLES={today:"Vandaag",dash:"Dashboard",week:"Weekreview",foundation:"Het fundament",id:"Identiteit & gewoonten"};
 function switchTab(name){
@@ -1899,7 +2345,9 @@ function renderBackupNote(){
   else { el.textContent="Laatste back-up: "+lb+(d===0?" (vandaag)":d===1?" (gisteren)":" ("+d+" dagen geleden)"); el.style.color="var(--muted)"; }
 }
 function exportData(){
-  const blob=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  const clone=JSON.parse(JSON.stringify(DB));
+  if(clone.settings && clone.settings.ai){ clone.settings.ai.key=""; }   // sleutel nooit mee-backuppen
+  const blob=new Blob([JSON.stringify(clone,null,2)],{type:"application/json"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
   a.download="discipline-tracker-backup-"+TODAY+".json"; a.click();
   DB.settings.lastBackup=TODAY; save(); renderBackupNote(); toast("Back-up gedownload ✓");
@@ -1928,6 +2376,7 @@ load().then(function(){
   checkAllReminders();
   setInterval(checkAllReminders, 30000);
   registerSW();
+  if(needsOnboarding()) startOnboarding();
 }).catch(function(){
   // Uiterste terugval: seed tonen zodat de app nooit leeg blijft hangen.
   DB = JSON.parse(JSON.stringify(SEED)); applyDefaults();
