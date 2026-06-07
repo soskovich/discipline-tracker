@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#16302b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="Discipline">
+<title>Discipline Tracker</title>
+<style>
+  :root{
+    --bg:#0f211e; --bg2:#16302b; --card:#1d3b35; --card2:#244a42;
+    --line:#2f5950; --ink:#eef3f1; --muted:#9bb5ad; --soft:#c6d6d1;
+    --accent:#e6a15a; --accent2:#f0b978; --good:#5ec48a; --bad:#e07a6b;
+    --ring:#5ec48a; --shadow:0 6px 20px rgba(0,0,0,.28);
+    --r:18px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,var(--bg) 0%, var(--bg2) 100%);
+    color:var(--ink); min-height:100vh; line-height:1.45;
+    padding-bottom:calc(76px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:0 16px}
+  header.top{
+    padding:calc(14px + env(safe-area-inset-top)) 16px 12px;
+    position:sticky;top:0;z-index:20;
+    background:linear-gradient(180deg,var(--bg) 70%, rgba(15,33,30,0));
+  }
+  .top .wrap{padding:0}
+  .hello{font-size:13px;color:var(--muted);letter-spacing:.3px}
+  .htitle{font-size:22px;font-weight:700;margin:2px 0 0}
+  .tab{display:none;animation:fade .25s ease}
+  .tab.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+  .card h2{font-size:15px;margin:0 0 4px;font-weight:700}
+  .card .sub{font-size:12.5px;color:var(--muted);margin:0 0 10px}
+  .section-label{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);font-weight:700;margin:18px 4px 2px}
+
+  .ringrow{display:flex;align-items:center;gap:16px}
+  .ring{position:relative;width:84px;height:84px;flex:0 0 auto}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column}
+  .ring .pct b{font-size:20px}
+  .ring .pct span{font-size:10px;color:var(--muted)}
+  .ringmeta{font-size:13px;color:var(--soft)}
+  .ringmeta b{color:var(--ink)}
+
+  .habit{display:flex;align-items:center;gap:13px;padding:13px;border-radius:14px;background:var(--card2);border:1px solid transparent;margin:9px 0;cursor:pointer;transition:.15s;user-select:none}
+  .habit:active{transform:scale(.99)}
+  .habit.done{border-color:var(--good);background:linear-gradient(90deg,rgba(94,196,138,.16),var(--card2))}
+  .check{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:16px;color:transparent;transition:.15s}
+  .habit.done .check{background:var(--good);border-color:var(--good);color:#0f211e}
+  .habit .hname{font-size:14.5px;font-weight:600;line-height:1.3}
+  .habit .hid{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+  label.fl{display:block;font-size:12.5px;color:var(--soft);margin:14px 0 6px;font-weight:600}
+  input[type=text],input[type=number],input[type=time],input[type=date],textarea,select{
+    width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--ink);
+    border-radius:12px;padding:11px 12px;font-size:15px;font-family:inherit;outline:none}
+  select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 18px,calc(100% - 13px) 18px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+  textarea{resize:vertical;min-height:62px}
+  .energy{display:flex;gap:8px}
+  .energy button{flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--soft);border-radius:12px;padding:11px 0;font-size:16px;font-weight:700;cursor:pointer}
+  .energy button.on{background:var(--accent);border-color:var(--accent);color:#241405}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .stat .n{font-size:24px;font-weight:800;line-height:1}
+  .stat .l{font-size:11.5px;color:var(--muted);margin-top:5px}
+  .stat.streak .n{color:var(--accent2)}
+  .bar{margin:11px 0}
+  .bar .bl{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+  .bar .bl span:last-child{color:var(--muted)}
+  .track{height:9px;background:var(--bg2);border-radius:6px;overflow:hidden}
+  .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .5s}
+  .princ{font-size:13px;color:var(--soft);padding:9px 0;border-bottom:1px solid var(--line)}
+  .princ:last-child{border:0}
+  .princ b{color:var(--accent2)}
+
+  /* segmented control (heatmap-bereik) */
+  .seg{display:flex;gap:6px;margin:4px 0 4px}
+  .seg button{flex:1;background:var(--card2);border:1px solid var(--line);color:var(--soft);border-radius:10px;padding:8px 0;font-size:12.5px;font-weight:700;cursor:pointer}
+  .seg button.on{background:var(--accent);border-color:var(--accent);color:#241405}
+  /* per-gewoonte streak in lijst */
+  .hstreak{margin-left:auto;font-size:12.5px;color:var(--accent2);font-weight:800;flex:0 0 auto;align-self:center;white-space:nowrap}
+  /* mis-nooit-twee-keer melding */
+  .miss{background:linear-gradient(90deg,rgba(240,185,120,.16),var(--card2));border:1px solid var(--accent);border-radius:14px;padding:13px 14px;margin:0 0 12px;display:flex;gap:11px;align-items:flex-start;box-shadow:var(--shadow)}
+  .miss .mi{font-size:21px;line-height:1;flex:0 0 auto}
+  .miss .mt{flex:1;font-size:13px;color:var(--soft)}
+  .miss .mt b{display:block;color:var(--ink);font-size:14px;margin-bottom:2px}
+  .miss .miss-x{background:transparent;border:0;color:var(--muted);font-size:17px;padding:0 2px;cursor:pointer;flex:0 0 auto}
+
+  .weekpick{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;-ms-overflow-style:none;scrollbar-width:none}
+  .weekpick::-webkit-scrollbar{display:none}
+  .wk{flex:0 0 auto;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 13px;font-size:13px;cursor:pointer;text-align:center;min-width:64px}
+  .wk.on{background:var(--accent);border-color:var(--accent);color:#241405}
+  .wk small{display:block;font-size:10px;opacity:.8}
+
+  .qa{padding:11px 0;border-bottom:1px solid var(--line)}
+  .qa:last-child{border:0}
+  .qa .q{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:4px}
+  .qa .a{font-size:13.5px;color:var(--soft);white-space:pre-wrap}
+  .hcard{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:13px;margin:10px 0}
+  .hcard .t{font-size:14px;font-weight:700;margin-bottom:6px;padding-right:54px}
+  .law{font-size:12.5px;color:var(--soft);margin:4px 0;display:flex;gap:8px}
+  .law b{color:var(--accent2);flex:0 0 auto}
+
+  .cardhead{display:flex;justify-content:space-between;align-items:center}
+  .iconbtn{background:none;border:1px solid var(--line);color:var(--accent);border-radius:9px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:600}
+  .iconbtn.danger{color:var(--bad)}
+  .hbtns{position:absolute;top:11px;right:11px;display:flex;gap:6px}
+  .btnrow{display:flex;gap:10px;margin-top:12px}
+  .btnrow button{flex:1;border-radius:11px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--line)}
+  .btn-save{background:var(--accent);color:#241405;border-color:var(--accent)}
+  .btn-cancel{background:var(--bg2);color:var(--soft)}
+  .addbtn{width:100%;background:var(--card2);border:1px dashed var(--line);color:var(--accent2);border-radius:12px;padding:12px;font-size:13.5px;font-weight:700;cursor:pointer;margin-top:6px}
+  .btn-mail{width:100%;margin-top:12px;background:var(--accent);color:#241405;border:1px solid var(--accent);border-radius:12px;padding:13px;font-size:14.5px;font-weight:700;cursor:pointer}
+  .btn-mail:active{transform:scale(.99)}
+  .btn-alt{background:var(--card2);color:var(--accent2);border:1px solid var(--line)}
+
+  .affirm-text{font-size:18px;line-height:1.5;color:var(--ink);font-weight:600;margin:12px 0 14px}
+  .affirm-nav{display:flex;gap:10px}
+  .affirm-nav button{flex:1;background:var(--card2);border:1px solid var(--line);color:var(--soft);border-radius:11px;padding:10px;font-size:13px;cursor:pointer;font-weight:600}
+  .sleep-result{font-size:15px;font-weight:700;margin:12px 0 2px;padding:11px 13px;border-radius:12px;display:none}
+
+  .rank-badge{display:inline-flex;align-items:center;gap:5px;margin-top:7px;background:var(--card2);border:1px solid var(--line);color:var(--accent2);border-radius:20px;padding:3px 11px;font-size:12px;font-weight:700}
+  .celebrate-overlay{position:fixed;inset:0;z-index:80;background:rgba(8,18,16,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:24px}
+  .celebrate-overlay.show{display:flex;animation:fade .25s ease}
+  .celebrate-box{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--accent);border-radius:22px;padding:30px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:pop .4s cubic-bezier(.2,1.3,.4,1)}
+  @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+  .celebrate-icon{font-size:58px;line-height:1;margin-bottom:8px}
+  .celebrate-streak{font-size:13px;color:var(--accent2);font-weight:800;letter-spacing:.8px;text-transform:uppercase}
+  .celebrate-msg{font-size:17px;color:var(--ink);font-weight:600;line-height:1.45;margin:12px 0 14px}
+  .celebrate-rank{font-size:14px;color:var(--soft);margin-bottom:22px}
+  .celebrate-rank .cel-new{color:var(--good);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+  .celebrate-box button{width:100%;background:var(--accent);color:#241405;border:0;border-radius:13px;padding:13px;font-size:15px;font-weight:800;cursor:pointer}
+
+  /* print report (opslaan als PDF) */
+  #printReport{display:none}
+  @media print{
+    body{background:#fff !important;padding:0 !important}
+    header.top, nav.bottom, main, #reminderBanner, .toast{display:none !important}
+    #printReport{display:block !important}
+  }
+  #printReport{color:#16302b;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pr-head{background:#16302b;padding:24px 26px}
+  .pr-head h1{margin:0;font-size:21px;color:#ffffff}
+  .pr-head .pr-period{font-size:13px;color:#f0b978;margin-top:5px}
+  .pr-body{padding:20px 26px}
+  .pr-kpis{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
+  .pr-kpi{flex:1 1 28%;border:1px solid #d8e3df;border-radius:12px;padding:12px}
+  .pr-kpi .n{font-size:21px;font-weight:800;color:#16302b}
+  .pr-kpi .l{font-size:10.5px;color:#5b736c;margin-top:3px}
+  .pr-h2{font-size:13px;color:#c07d2a;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin:20px 0 8px}
+  .pr-bar{margin:7px 0}
+  .pr-bar .bl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:#16302b}
+  .pr-track{height:8px;background:#eef3f1;border-radius:5px;overflow:hidden}
+  .pr-fill{height:100%;background:linear-gradient(90deg,#e6a15a,#f0b978)}
+  .pr-list{font-size:12.5px;color:#2b3f3a}
+  .pr-list div{padding:3px 0}
+  .pr-foot{margin-top:22px;font-size:10.5px;color:#9bb5ad;border-top:1px solid #e3ebe8;padding-top:10px}
+  .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0}
+  .switch{position:relative;width:50px;height:28px;flex:0 0 auto}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{position:absolute;inset:0;background:var(--bg2);border:1px solid var(--line);border-radius:28px;transition:.2s;cursor:pointer}
+  .slider:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:var(--muted);border-radius:50%;transition:.2s}
+  .switch input:checked + .slider{background:var(--good);border-color:var(--good)}
+  .switch input:checked + .slider:before{transform:translateX(22px);background:#0f211e}
+
+  nav.bottom{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;
+    background:rgba(22,48,43,.92);backdrop-filter:blur(12px);
+    border-top:1px solid var(--line);
+    display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+  nav.bottom button{flex:1;background:none;border:0;color:var(--muted);font-size:10.5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;font-weight:600}
+  nav.bottom button.on{color:var(--accent2)}
+  nav.bottom .ic{font-size:21px;line-height:1}
+  .foottools{display:flex;gap:10px;justify-content:center;margin:22px 0 6px}
+  .foottools button{background:var(--card2);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:9px 14px;font-size:12px;cursor:pointer}
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--accent);color:#241405;padding:10px 18px;border-radius:30px;font-size:13px;font-weight:700;opacity:0;transition:.3s;z-index:50;box-shadow:var(--shadow);pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  #reminderBanner{
+    position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));z-index:60;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));color:#241405;
+    border-radius:14px;padding:13px 14px;box-shadow:var(--shadow);
+    display:none;align-items:center;gap:12px;max-width:520px;margin:0 auto}
+  #reminderBanner.show{display:flex}
+  #reminderBanner .rb-txt{flex:1;font-size:13.5px;font-weight:600}
+  #reminderBanner .rb-txt b{display:block;font-size:14.5px}
+  #reminderBanner button{background:#241405;color:#f0b978;border:0;border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+  #reminderBanner .rb-x{background:transparent;color:#241405;font-size:18px;padding:2px 6px}
+</style>
+</head>
+<body>
+
+<div id="reminderBanner">
+  <span style="font-size:22px" id="rbIcon">🔔</span>
+  <div class="rb-txt"><b id="rbTitle">Tijd voor je gewoonten</b><span id="rbSub">Vink af wat je vandaag hebt gedaan.</span></div>
+  <button id="rbAction" onclick="rbActionClick()">Afvinken</button>
+  <button class="rb-x" onclick="dismissReminder()">✕</button>
+</div>
+
+<header class="top"><div class="wrap">
+  <div class="hello" id="helloDate"></div>
+  <div class="htitle" id="tabTitle">Vandaag</div>
+</div></header>
+
+<main class="wrap">
+
+<!-- ============ VANDAAG ============ -->
+<section class="tab active" id="tab-today">
+  <div class="card" id="dateCard">
+    <div class="cardhead"><h2 style="margin:0" id="dateCardTitle">Vandaag invullen</h2>
+      <button class="iconbtn" id="todayBtn" onclick="goToday()" style="display:none">↩︎ Vandaag</button></div>
+    <p class="sub">Kies een dag om alsnog in te vullen of te corrigeren — je streak en cijfers herberekenen automatisch.</p>
+    <input type="date" id="datePick" onchange="pickDate(this.value)">
+    <p class="sub" id="dateNote" style="margin:10px 0 0"></p>
+  </div>
+
+  <div class="card">
+    <div class="ringrow">
+      <div class="ring">
+        <svg width="84" height="84" viewBox="0 0 84 84">
+          <circle cx="42" cy="42" r="36" fill="none" stroke="#2f5950" stroke-width="9"/>
+          <circle id="ringFill" cx="42" cy="42" r="36" fill="none" stroke="var(--ring)" stroke-width="9" stroke-linecap="round" stroke-dasharray="226" stroke-dashoffset="226"/>
+        </svg>
+        <div class="pct"><b id="todayPct">0%</b><span id="todayPctLabel">vandaag</span></div>
+      </div>
+      <div class="ringmeta">
+        <div><b id="todayDone">0</b> van <b id="todayTotal">4</b> gewoonten</div>
+        <div style="margin-top:4px;color:var(--accent2)">🔥 Streak: <b id="todayStreak">0</b> dagen</div>
+        <div id="rankBadge" class="rank-badge"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="affirmCard">
+    <div class="cardhead"><h2 style="margin:0">Affirmatie van vandaag</h2>
+      <button class="iconbtn" onclick="speakAffirmation()">🔊 Lees voor</button></div>
+    <p class="affirm-text" id="affirmText"></p>
+    <div class="affirm-nav">
+      <button onclick="cycleAffirmation(-1)">‹ Vorige</button>
+      <button onclick="cycleAffirmation(1)">Volgende ›</button>
+    </div>
+    <p class="sub" style="margin:10px 0 0">Gericht op je identiteit, gewoonten en jaardoelen. Bewerk ze op het tabblad Identiteit.</p>
+  </div>
+
+  <div id="missTwice"></div>
+
+  <div class="card">
+    <h2>Gewoonten afvinken</h2>
+    <p class="sub">Tik om af te vinken — 1 = gedaan. Mis nooit twee keer achter elkaar.</p>
+    <div id="habitList"></div>
+  </div>
+
+  <button id="moreToggle" class="addbtn" onclick="toggleMore()" style="margin:2px 0 4px">➕ Meer loggen (energie, slaap, prioriteiten, reflectie)</button>
+  <div id="moreLogging" style="display:none">
+
+  <div class="card">
+    <h2>Dagstatus</h2>
+    <label class="fl">Energie (1–5)</label>
+    <div class="energy" id="energyRow"></div>
+    <label class="fl">Diep werk (minuten)</label>
+    <input type="number" id="deepWork" inputmode="numeric" placeholder="0" min="0">
+  </div>
+
+  <div class="card" id="sleepCard">
+    <h2>Slaap</h2>
+    <p class="sub">Vul de slaap van afgelopen nacht in — de duur wordt automatisch berekend.</p>
+    <div class="row2">
+      <div><label class="fl">Naar bed</label><input type="time" id="sleepBed"></div>
+      <div><label class="fl">Opgestaan</label><input type="time" id="sleepWake"></div>
+    </div>
+    <div id="sleepResult" class="sleep-result"></div>
+    <label class="fl">Slaapkwaliteit (1–5)</label>
+    <div class="energy" id="sleepQual"></div>
+    <label class="fl">Slaapdoel (uren)</label>
+    <input type="number" id="sleepGoal" inputmode="decimal" min="0" step="0.5" placeholder="7">
+  </div>
+
+  <div class="card">
+    <h2>Top 3 prioriteiten van vandaag</h2>
+    <input type="text" id="prio0" placeholder="1 — belangrijkste">
+    <div style="height:8px"></div>
+    <input type="text" id="prio1" placeholder="2">
+    <div style="height:8px"></div>
+    <input type="text" id="prio2" placeholder="3">
+  </div>
+
+  <div class="card">
+    <h2>Reflectie</h2>
+    <label class="fl">Wat ging goed?</label>
+    <textarea id="good" placeholder="Een kleine win van vandaag…"></textarea>
+    <label class="fl">Wat kon beter?</label>
+    <textarea id="better" placeholder="Wat liep stroef of wat had je anders gewild…"></textarea>
+    <label class="fl">Wat doe ik morgen anders?</label>
+    <textarea id="tomorrow" placeholder="Eén aanpassing…"></textarea>
+  </div>
+
+  <div class="card">
+    <h2>Dagboek</h2>
+    <p class="sub">Vrije ruimte. Een gedachte, een gebeurtenis, of: was ik vandaag de persoon die ik wil worden?</p>
+    <textarea id="note" placeholder="Schrijf vrijuit…" style="min-height:90px"></textarea>
+  </div>
+  </div>
+</section>
+
+<!-- ============ DASHBOARD ============ -->
+<section class="tab" id="tab-dash">
+  <div class="card" id="rankCard"></div>
+
+  <div class="card">
+    <h2>Samenvatting</h2>
+    <p class="sub">Live overzicht van je log. Alles berekent zichzelf.</p>
+    <div class="stats">
+      <div class="stat streak"><div class="n" id="sStreak">0</div><div class="l">🔥 Huidige streak (dagen)</div></div>
+      <div class="stat"><div class="n" id="sCompl">0%</div><div class="l">Completion totaal</div></div>
+      <div class="stat"><div class="n" id="sDays">0</div><div class="l">Dagen gelogd</div></div>
+      <div class="stat"><div class="n" id="sDeep">0</div><div class="l">Diep werk (uren)</div></div>
+      <div class="stat"><div class="n" id="sAvgSleep">—</div><div class="l">😴 Gem. slaap (uren)</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Per gewoonte — consistentie</h2>
+    <p class="sub">Percentage van de gelogde dagen dat je de gewoonte deed.</p>
+    <div id="habitBars"></div>
+  </div>
+
+  <div class="card">
+    <h2>Consistentie</h2>
+    <div class="seg" id="heatSeg">
+      <button data-r="d14" onclick="setHeatRange('d14')">14 dagen</button>
+      <button data-r="month" onclick="setHeatRange('month')">Maand</button>
+      <button data-r="year" onclick="setHeatRange('year')">Jaar</button>
+    </div>
+    <div id="heatHead" class="sub" style="display:flex;justify-content:space-between;align-items:center;min-height:22px;margin:0"></div>
+    <div id="heat" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px"></div>
+  </div>
+
+  <div class="card" id="dayDetailCard" style="display:none"></div>
+
+  <div class="card">
+    <h2>Principes om te onthouden</h2>
+    <div class="princ"><b>1%</b> beter per dag = 37× in een jaar (1.01³⁶⁵ = 37,78×).</div>
+    <div class="princ">Mis nooit twee keer achter elkaar. Eén keer is menselijk, twee keer is een patroon.</div>
+    <div class="princ">Systeem &gt; doel. Het doel bepaalt de richting, het systeem brengt je er.</div>
+    <div class="princ">Identiteit &gt; resultaat. Elke gewoonte is een stem voor wie je wordt.</div>
+    <div class="princ">Omgeving &gt; motivatie. Maak het juiste makkelijk en het verkeerde moeilijk.</div>
+  </div>
+</section>
+
+<!-- ============ WEEKREVIEW ============ -->
+<section class="tab" id="tab-week">
+  <div class="card">
+    <h2>Weekreview</h2>
+    <p class="sub">Elke zondag, 15 min. Wat werkte, wat niet, wat pas je aan?</p>
+    <div class="weekpick" id="weekPick"></div>
+    <div style="margin-top:6px;font-size:13px;color:var(--soft)">
+      Week van <b id="wkLabel"></b> — completion <b id="wkCompl" style="color:var(--accent2)">0%</b>
+    </div>
+    <label class="fl">✅ Wat werkte (wins)</label>
+    <textarea id="wkWins" placeholder="Waar ben je trots op?"></textarea>
+    <label class="fl">⚠️ Wat ging fout (obstakels)</label>
+    <textarea id="wkObst" placeholder="Wat hield je tegen?"></textarea>
+    <label class="fl">🔧 Aanpassing voor volgende week</label>
+    <textarea id="wkAdj" placeholder="Eén concrete aanpassing…"></textarea>
+  </div>
+
+  <div class="card">
+    <h2>Weekoverzicht</h2>
+    <p class="sub">Stelt een samenvatting, key take-aways en focuspunten op uit je data. Mail opent je mailapp met de tekst; PDF opent een visueel overzicht in app-kleuren dat je opslaat als PDF (Delen → Print → Opslaan als PDF).</p>
+    <label class="fl">Naar e-mailadres</label>
+    <input type="text" id="sumEmail" inputmode="email" placeholder="jouw@email.nl">
+    <button class="btn-mail" onclick="emailSummary()">📧 Mail het weekoverzicht</button>
+    <button class="btn-mail btn-alt" onclick="printWeekReport()">🖨️ Weekoverzicht als PDF</button>
+  </div>
+</section>
+
+<!-- ============ IDENTITEIT & GEWOONTEN ============ -->
+<section class="tab" id="tab-id">
+  <div class="section-label">Herinnering</div>
+  <div class="card" id="reminderCard">
+    <h2>Dagelijkse herinnering</h2>
+    <p class="sub">Een melding op je gekozen tijd om je gewoonten af te vinken.</p>
+    <div class="toggle">
+      <span style="font-size:14px;font-weight:600">Herinnering aan</span>
+      <label class="switch"><input type="checkbox" id="remToggle"><span class="slider"></span></label>
+    </div>
+    <label class="fl">Tijd</label>
+    <input type="time" id="remTime" value="20:00">
+    <div class="btnrow">
+      <button class="btn-cancel" onclick="testReminder()">🔔 Test melding</button>
+    </div>
+    <p class="sub" id="remNote" style="margin-top:10px"></p>
+
+    <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+    <h2>Wekelijkse herinnering</h2>
+    <p class="sub">Een seintje om je weekoverzicht te mailen.</p>
+    <div class="toggle">
+      <span style="font-size:14px;font-weight:600">Wekelijkse herinnering aan</span>
+      <label class="switch"><input type="checkbox" id="wkRemToggle"><span class="slider"></span></label>
+    </div>
+    <label class="fl">Dag</label>
+    <select id="wkRemDay">
+      <option value="1">Maandag</option>
+      <option value="2">Dinsdag</option>
+      <option value="3">Woensdag</option>
+      <option value="4">Donderdag</option>
+      <option value="5">Vrijdag</option>
+      <option value="6">Zaterdag</option>
+      <option value="0">Zondag</option>
+    </select>
+    <label class="fl">Tijd</label>
+    <input type="time" id="wkRemTime" value="18:00">
+    <div class="btnrow">
+      <button class="btn-cancel" onclick="fireWeekly()">🔔 Test melding</button>
+    </div>
+    <p class="sub" id="wkRemNote" style="margin-top:10px"></p>
+
+    <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+    <h2>In Google Agenda zetten</h2>
+    <p class="sub">Maakt een agenda-bestand (.ics) met je dagelijkse en wekelijkse herinnering als terugkerende afspraken. Open het bestand op je telefoon → toevoegen aan Google Agenda. Wijzig je een tijd, download dan opnieuw.</p>
+    <button class="addbtn" onclick="downloadICS()" style="margin-top:4px">📅 Download agenda-bestand (.ics)</button>
+  </div>
+
+  <div class="section-label">Identiteit</div>
+  <div class="card" id="identityCard"></div>
+
+  <div class="section-label">Jaardoelen</div>
+  <div class="card" id="goalsCard"></div>
+
+  <div class="section-label">Affirmaties</div>
+  <div class="card" id="affirmEditCard"></div>
+
+  <div class="section-label">Mijn sleutelgewoonten — de Vier Wetten</div>
+  <div id="habitDefs"></div>
+</section>
+
+<!-- ============ FUNDAMENT ============ -->
+<section class="tab" id="tab-foundation">
+  <div class="card">
+    <h2>Het fundament</h2>
+    <p class="sub">Discipline as Engineering™ — een systeem sterker dan motivatie, emoties of omstandigheden. Zes lagen die je gedrag dragen, óók op slechte dagen. Vul ze in je eigen woorden in; alles bewaart zichzelf.</p>
+    <div class="bar" id="foundProgress" style="margin-top:8px">
+      <div class="bl"><span>Lagen ingevuld</span><span class="fp-count">0/6 lagen</span></div>
+      <div class="track"><div class="fill" style="width:0%"></div></div>
+    </div>
+    <p class="sub" style="margin:12px 0 0">🔗 Velden waarvan de gegevens al in de app bekend zijn (Identiteit, gewoonten, weekreviews, je data) zijn automatisch ingevuld. Pas ze gerust aan — alleen wat nog ontbreekt, vul je zelf in.</p>
+    <button class="iconbtn" style="margin-top:10px" onclick="repullFoundation()">🔗 Aanvullen uit app-data</button>
+  </div>
+  <div id="foundationBody"></div>
+  <div class="card" style="text-align:center">
+    <p style="font-size:14px;color:var(--accent2);font-weight:600;margin:4px 0;line-height:1.5">Discipline is geen gevoel dat je opwekt,<br>maar een systeem dat je bouwt.</p>
+  </div>
+</section>
+
+<div class="foottools">
+  <button onclick="exportData()">⬇︎ Back-up exporteren</button>
+  <button onclick="document.getElementById('imp').click()">⬆︎ Importeren</button>
+  <input type="file" id="imp" accept="application/json" style="display:none" onchange="importData(event)">
+</div>
+<div id="backupNote" style="text-align:center;color:var(--muted);font-size:11.5px;margin:0 16px 6px"></div>
+<div style="text-align:center;color:var(--muted);font-size:11px;margin-bottom:10px">
+  Gegevens worden lokaal op dit toestel bewaard · Discipline as Engineering
+</div>
+
+</main>
+
+<div id="celebrate" class="celebrate-overlay">
+  <div class="celebrate-box">
+    <div class="celebrate-icon" id="celIcon">🔥</div>
+    <div class="celebrate-streak" id="celStreak"></div>
+    <div class="celebrate-msg" id="celMsg"></div>
+    <div class="celebrate-rank" id="celRank"></div>
+    <button onclick="closeCelebrate()">Mooi! Door zo →</button>
+  </div>
+</div>
+
+<div id="printReport"></div>
+
+<nav class="bottom">
+  <button type="button" class="on" data-tab="today"><span class="ic">✓</span>Vandaag</button>
+  <button type="button" data-tab="dash"><span class="ic">📊</span>Dashboard</button>
+  <button type="button" data-tab="week"><span class="ic">🗓</span>Week</button>
+  <button type="button" data-tab="foundation"><span class="ic">🧱</span>Fundament</button>
+  <button type="button" data-tab="id"><span class="ic">🧭</span>Identiteit</button>
+</nav>
+<div class="toast" id="toast">Opgeslagen ✓</div>
+
+<script>
+/* ---------- Seed data (uit jouw Discipline_Tracker.xlsx) ---------- */
+const SEED = {
+  habits:[
+    {id:"h1", name:"Ochtendritueel: affirmaties hardop + adempauze (4-4-6), 5 min",
+     identity:"Ik ben iemand die zijn eigenwaarde voedt — los van presteren",
+     cue:"Direct na opstaan, vóór de telefoon — identiteitskaart op het nachtkastje",
+     attractive:"Koppel aan mijn eerste kop koffie/thee",
+     easy:"Lees alleen de 4 affirmaties één keer hardop",
+     satisfying:"Afvinken in tracker + rustig de dag in starten"},
+    {id:"h2", name:"Ochtendritueel: gezicht wassen + tanden poetsen",
+     identity:"Ik ben iemand die persoonlijke hygiëne belangrijk vindt",
+     cue:"Direct na opstaan, vóór de telefoon — eerste wat ik doe",
+     attractive:"Koppel aan mijn eerste kop koffie/thee",
+     easy:"Opstaan en gelijk naar de badkamer lopen",
+     satisfying:"Afvinken in tracker + rustig de dag in starten"},
+    {id:"h3", name:"Dagelijks bewegen (cardio of krachttraining)",
+     identity:"Ik ben iemand die goed en zacht voor zijn lichaam zorgt",
+     cue:"Ochtend, middag of avond afhankelijk van dagplanning",
+     attractive:"Podcast of muziek tijdens bewegen (optioneel)",
+     easy:"Sporttas al klaarzetten, schoenen bij de deur",
+     satisfying:"Streak afvinken + merkbaar meer energie"},
+    {id:"h4", name:"Avond-check-in: 1 grens bewaken + 2 min reflectie",
+     identity:"Ik ben iemand die grenzen stelt en mag rusten zonder schuld",
+     cue:"Na het avondeten, aan tafel met notitieboek",
+     attractive:"Koppel aan een kop thee / na de afwas",
+     easy:"Schrijf 1 zin: welke grens hield ik, of wat had ik nodig?",
+     satisfying:"Gevoel van rust + zien dat verbinding blijft bestaan"}
+  ],
+  identity:{
+    become:"Een man met een zacht hart die veiligheid bouwt en bewust leidt — vanuit rust, inzicht en verantwoordelijkheid. Ik verbind vanuit echtheid en ben waardevol zonder te presteren. Ik mag aanwezig zijn zonder te fixen, rusten zonder schuld, ontvangen zonder angst en kwetsbaar zijn zonder gevaar. Wie ik ben is genoeg.",
+    values:"Echtheid · Verbinding (empathie, zacht hart) · Rust & herstel · Zelfrespect & grenzen · Eigenwaarde & vrijheid",
+    now:"Aanwezig zijn zonder iets op te lossen. Een heldere grens stellen zonder schuld. Rusten zonder mezelf te rechtvaardigen, en hulp vragen en ontvangen. Dagelijks affirmaties hardop lezen en een adempauze nemen (4 in – 4 vast – 6 uit). Bewust kiezen voor 'zijn' in plaats van 'doen'.",
+    letgo:"De fixer/drager die zijn waarde haalt uit presteren en altijd sterk zijn. 'Ja' zeggen terwijl mijn energie laag is, sterker doen dan ik ben, en rust of grenzen zien als schuld of falen."
+  },
+  goals:[
+    {l:"Gezondheid / lichaam", t:"Beweeg 6× per week (kracht + cardio) en slaap minimaal 7 uur. Plan wekelijks één bewuste rustdag — rust is herstel, geen luxe of schuld."},
+    {l:"Werk / vakmanschap", t:"Werk en leid vanuit rust i.p.v. overbelasting: heldere werkgrens (max 32 uur/week), delegeer of zeg 'nee' zonder schuld. Verdiep mijn vakmanschap."},
+    {l:"Geest / leren", t:"Wekelijks reflectiemoment van 20 min met dit kader en dagelijks affirmaties hardop. Leer over persoonlijk leiderschap (Bas W. Blekkingh)."},
+    {l:"Relaties", t:"Wekelijks kwaliteitstijd in gezin en familie. Oefen in ontvangen en hulp vragen, deel minstens 1× per week iets kwetsbaars. Verbinding boven presteren."},
+    {l:"Financieel / persoonlijk", t:"Privé een spaarbuffer van 6× vaste lasten en koppel eigenwaarde los van dit resultaat. Borg de nieuwe identiteit in een vaste dagelijkse routine."}
+  ],
+  affirmations:[
+    "Wie ik ben is genoeg — mijn waarde hangt niet af van wat ik presteer.",
+    "Ik mag aanwezig zijn zonder te fixen, rusten zonder schuld en ontvangen zonder angst.",
+    "Ik bouw veiligheid en leid bewust vanuit rust, inzicht en verantwoordelijkheid.",
+    "Ik leef vanuit echtheid, verbinding, rust, zelfrespect en eigenwaarde.",
+    "Ik ben iemand die zijn eigenwaarde voedt — los van presteren.",
+    "Ik ben iemand die goed en zacht voor zijn lichaam zorgt.",
+    "Ik ben iemand die grenzen stelt en mag rusten zonder schuld.",
+    "Ik beweeg dagelijks met zorg voor mijn lichaam en gun mezelf herstel.",
+    "Ik werk en leid vanuit rust, en zeg 'nee' zonder schuld.",
+    "Ik kies verbinding boven presteren — ik geef én ontvang liefde.",
+    "Eén procent beter per dag: klein en consistent verandert wie ik ben."
+  ],
+  logs:{
+    "2026-06-01":{habits:{h1:true,h2:true,h3:true,h4:false}, energy:3, deep:0, prio:["","",""], good:"", tomorrow:""},
+    "2026-06-02":{habits:{h1:false,h2:true,h3:true,h4:false}, energy:0, deep:0, prio:["","",""], good:"", tomorrow:""}
+  },
+  weeks:{},
+  foundation:{},
+  settings:{reminderOn:false, reminderTime:"20:00", lastReminded:"", email:"vefinanceconsulting@gmail.com", weeklyOn:false, weeklyDay:0, weeklyTime:"18:00", lastWeekly:"", sleepGoal:7}
+};
+
+/* ---------- State / storage (IndexedDB + localStorage-spiegel) ---------- */
+const KEY="disciplineTracker.v1";
+const IDB_NAME="disciplineTrackerDB", IDB_STORE="kv", IDB_VER=1;
+let DB;
+let _idb=null, _saveTimer=null, _idbReady=false;
+
+function idbOpen(){
+  return new Promise(function(res,rej){
+    try{
+      if(!("indexedDB" in window)) return rej(new Error("no-idb"));
+      const r=indexedDB.open(IDB_NAME, IDB_VER);
+      r.onupgradeneeded=function(){ const db=r.result; if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE); };
+      r.onsuccess=function(){ _idb=r.result; _idbReady=true; res(_idb); };
+      r.onerror=function(){ rej(r.error||new Error("idb-open")); };
+    }catch(e){ rej(e); }
+  });
+}
+function idbGet(key){
+  return new Promise(function(res,rej){
+    if(!_idb) return rej(new Error("no-idb"));
+    try{ const tx=_idb.transaction(IDB_STORE,"readonly"); const rq=tx.objectStore(IDB_STORE).get(key);
+      rq.onsuccess=function(){ res(rq.result); }; rq.onerror=function(){ rej(rq.error); };
+    }catch(e){ rej(e); }
+  });
+}
+function idbSet(key,val){
+  return new Promise(function(res,rej){
+    if(!_idb) return rej(new Error("no-idb"));
+    try{ const tx=_idb.transaction(IDB_STORE,"readwrite"); tx.objectStore(IDB_STORE).put(val,key);
+      tx.oncomplete=function(){ res(true); }; tx.onerror=function(){ rej(tx.error); };
+    }catch(e){ rej(e); }
+  });
+}
+
+function persistNow(){
+  // Synchrone spiegel naar localStorage (best-effort) — extra vangnet.
+  try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){}
+  // Async naar IndexedDB (primair, duurzaam).
+  if(_idbReady) idbSet(KEY, DB).catch(function(){});
+}
+function save(){
+  // Debounce om niet bij elke toetsaanslag te schrijven; spiegel direct.
+  try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){}
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(function(){ if(_idbReady) idbSet(KEY, DB).catch(function(){}); }, 250);
+}
+
+function applyDefaults(){
+  if(!DB.weeks) DB.weeks={};
+  if(!DB.foundation) DB.foundation={};
+  autofillFoundation(false);   // vul automatisch aan uit reeds bekende app-data (alleen lege velden)
+  if(!DB.settings) DB.settings={reminderOn:false, reminderTime:"20:00", lastReminded:"", email:"vefinanceconsulting@gmail.com"};
+  if(DB.settings.email===undefined) DB.settings.email="vefinanceconsulting@gmail.com";
+  if(DB.settings.weeklyOn===undefined){ DB.settings.weeklyOn=false; DB.settings.weeklyDay=0; DB.settings.weeklyTime="18:00"; DB.settings.lastWeekly=""; }
+  if(!DB.affirmations) DB.affirmations = JSON.parse(JSON.stringify(SEED.affirmations));
+  if(DB.settings.sleepGoal===undefined) DB.settings.sleepGoal=7;
+  // streak-status init: synchroniseer stil met huidige voortgang zodat bestaande streaks niet opnieuw gevierd worden
+  if(DB.settings.bestStreak===undefined) DB.settings.bestStreak=currentStreak();
+  if(DB.settings.lastCelebratedStreak===undefined) DB.settings.lastCelebratedStreak=currentStreak();
+  if(DB.settings.lastRankMin===undefined) DB.settings.lastRankMin=rankFor(DB.settings.bestStreak).min;
+}
+
+async function load(){
+  // 1) IndexedDB openen (kan falen in private mode → val terug op localStorage).
+  try{ await idbOpen(); }catch(e){ _idbReady=false; }
+  // 2) Data ophalen: eerst IndexedDB, anders migreren uit localStorage, anders seed.
+  let data=null;
+  if(_idbReady){ try{ data=await idbGet(KEY); }catch(e){} }
+  if(!data){ try{ const ls=localStorage.getItem(KEY); if(ls) data=JSON.parse(ls); }catch(e){} }
+  DB = data ? data : JSON.parse(JSON.stringify(SEED));
+  applyDefaults();
+  persistNow(); // schrijf meteen naar beide lagen (migratie + normalisatie vastleggen)
+}
+
+/* ---------- Date helpers ---------- */
+const DAYS=["Zondag","Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag"];
+const MON=["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
+function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fromIso(s){ const [y,m,dd]=s.split("-").map(Number); return new Date(y,m-1,dd); }
+const TODAY = iso(new Date());
+let activeDate = TODAY;             // de dag die je momenteel invult/bewerkt
+function isFuture(d){ return d>TODAY; }
+function pickDate(v){ if(!v) return; activeDate=v; renderToday(); }
+function goToday(){ activeDate=TODAY; renderToday(); }
+function renderDateBar(){
+  const el=document.getElementById("datePick"); if(el){ el.value=activeDate; el.max=TODAY; }
+  const t=document.getElementById("dateCardTitle");
+  const note=document.getElementById("dateNote");
+  const btn=document.getElementById("todayBtn");
+  if(!t||!note||!btn) return;
+  const d=fromIso(activeDate);
+  const human=DAYS[d.getDay()]+" "+d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear();
+  if(activeDate===TODAY){
+    t.textContent="Vandaag invullen";
+    note.textContent="Je vult vandaag in ("+human+").";
+    btn.style.display="none";
+    var lab0=document.getElementById("todayPctLabel"); if(lab0) lab0.textContent="vandaag";
+  } else {
+    t.textContent="Eerdere dag bijwerken";
+    note.textContent="Je bewerkt "+human+" (terugwerkend). Tik op ‘Vandaag’ om terug te keren."+(isFuture(activeDate)?" Let op: dit is een toekomstige datum.":"");
+    btn.style.display="inline-block";
+    var lab1=document.getElementById("todayPctLabel"); if(lab1) lab1.textContent=DAYS[d.getDay()].slice(0,2).toLowerCase()+" "+d.getDate()+"/"+(d.getMonth()+1);
+  }
+}
+function mondayOf(d){ const x=new Date(d); const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); x.setHours(0,0,0,0); return x; }
+
+/* ---------- Computations ---------- */
+function activeHabits(){ return DB.habits.filter(h=>h.name && h.name.trim()); }
+function dayLog(date){
+  if(!DB.logs[date]) DB.logs[date]={habits:{}, energy:0, deep:0, prio:["","",""], good:"", better:"", tomorrow:"", note:"", sleepBed:"", sleepWake:"", sleepQuality:0};
+  return DB.logs[date];
+}
+
+/* ---------- Frequentie ---------- */
+function habitFreq(h){ const f=h&&h.freq; if(!f||!f.type) return {type:"daily"}; return f; }
+function dowOf(dateKey){ return fromIso(dateKey).getDay(); }            // 0=zo .. 6=za
+function isScheduled(h, dateKey){
+  const f=habitFreq(h);
+  if(f.type==="daily") return true;
+  if(f.type==="days") return Array.isArray(f.days) && f.days.indexOf(dowOf(dateKey))>=0;
+  return false;                                                         // weekly = flexibel (niet dag-gebonden)
+}
+function isFlexible(h){ return habitFreq(h).type==="weekly"; }
+function freqLabel(h){
+  const f=habitFreq(h);
+  if(f.type==="daily") return "Elke dag";
+  if(f.type==="weekly") return (f.perWeek||3)+"× per week";
+  if(f.type==="days"){ const dn=["zo","ma","di","wo","do","vr","za"]; return (f.days||[]).slice().sort().map(function(x){return dn[x];}).join(" · ")||"Vaste dagen"; }
+  return "Elke dag";
+}
+function scheduledHabits(dateKey){ return activeHabits().filter(function(h){ return isScheduled(h,dateKey); }); }
+function flexibleHabits(){ return activeHabits().filter(isFlexible); }
+function habitDoneOn(h, dateKey){ const l=DB.logs[dateKey]; return !!(l&&l.habits&&l.habits[h.id]); }
+
+/* ---------- Dag-niveau (alleen geplande gewoonten tellen mee) ---------- */
+function dayPlanned(dateKey){ return scheduledHabits(dateKey).length; }
+function dayDoneScheduled(dateKey){ return scheduledHabits(dateKey).filter(function(h){ return habitDoneOn(h,dateKey); }).length; }
+function dayDone(dateKey){ return dayDoneScheduled(dateKey); }          // voor ring/streak
+function dayRate(dateKey){ const n=dayPlanned(dateKey); return n? dayDoneScheduled(dateKey)/n : 0; }
+function anyHabitDone(dateKey){ const l=DB.logs[dateKey]; if(!l||!l.habits) return 0; return activeHabits().filter(function(h){return l.habits[h.id];}).length; }
+function isLogged(date){
+  const l=DB.logs[date]; if(!l) return false;
+  return anyHabitDone(date)>0 || (l.deep>0) || (l.energy>0) || l.good || l.better || l.tomorrow || l.note || l.sleepBed || l.sleepWake || l.prio.some(p=>p);
+}
+/* "rest" = niets gepland (breekt niet), "done" = ≥1 gepland gedaan, "broken" = gepland maar niets gedaan */
+function dayHolds(dateKey){
+  const planned=dayPlanned(dateKey);
+  if(planned===0) return "rest";
+  return dayDoneScheduled(dateKey)>0 ? "done" : "broken";
+}
+function currentStreak(){
+  let d=new Date(); let s=0;
+  if(dayHolds(iso(d))==="broken") d.setDate(d.getDate()-1);  // vandaag nog niet gedaan telt niet als breuk
+  for(let i=0;i<400;i++){
+    const st=dayHolds(iso(d));
+    if(st==="broken") break;
+    if(st==="done") s++;                                     // rustdag telt niet mee én breekt niet
+    d.setDate(d.getDate()-1);
+  }
+  return s;
+}
+function habitStreak(id){
+  const h=DB.habits.filter(function(x){return x.id===id;})[0]; if(!h) return 0;
+  const f=habitFreq(h); let d=new Date(); let s=0;
+  function sched(dt){ if(f.type==="days") return (f.days||[]).indexOf(dt.getDay())>=0; return true; }
+  function did(dt){ return habitDoneOn(h, iso(dt)); }
+  if(sched(d) && !did(d)) d.setDate(d.getDate()-1);
+  for(let i=0;i<400;i++){
+    if(!sched(d)){ d.setDate(d.getDate()-1); continue; }     // niet-geplande dag overslaan
+    if(did(d)){ s++; d.setDate(d.getDate()-1); } else break;
+  }
+  return s;
+}
+function habitWeekCount(h, mondayKey){
+  const mon=fromIso(mondayKey); let c=0;
+  for(let i=0;i<7;i++){ const dd=new Date(mon); dd.setDate(mon.getDate()+i); if(habitDoneOn(h,iso(dd))) c++; }
+  return c;
+}
+
+/* ---------- Rendering: Vandaag ---------- */
+function renderHello(){
+  const d=new Date();
+  document.getElementById("helloDate").textContent = DAYS[d.getDay()]+" "+d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear();
+}
+function renderToday(){
+  renderDateBar();
+  const l=dayLog(activeDate);
+  const list=document.getElementById("habitList"); list.innerHTML="";
+  const all=activeHabits();
+  if(all.length===0){ list.innerHTML='<p class="sub">Nog geen gewoonten. Voeg ze toe via het tabblad Identiteit.</p>'; }
+  const sched=all.filter(function(h){ return isScheduled(h,activeDate); });
+  const flex=all.filter(isFlexible);
+  const otherDays=all.filter(function(h){ return !isScheduled(h,activeDate) && !isFlexible(h); });
+  const monKey=iso(mondayOf(fromIso(activeDate)));
+
+  function habitRow(h, trailing){
+    const done = !!(l.habits&&l.habits[h.id]);
+    const el=document.createElement("div");
+    el.className="habit"+(done?" done":"");
+    el.setAttribute("role","button"); el.setAttribute("tabindex","0"); el.setAttribute("aria-pressed",done?"true":"false");
+    el.innerHTML='<div class="check">✓</div><div style="flex:1"><div class="hname">'+esc(h.name)+'</div><div class="hid">'+esc(h.identity||freqLabel(h))+'</div></div>'+(trailing||"");
+    function toggle(){ l.habits=l.habits||{}; l.habits[h.id]=!l.habits[h.id]; save(); renderToday(); }
+    el.onclick=toggle;
+    el.onkeydown=function(e){ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); } };
+    return el;
+  }
+  if(all.length){
+    if(sched.length===0 && flex.length===0){
+      list.innerHTML='<p class="sub">🌿 Rustdag — er zijn vandaag geen gewoonten gepland. Rust is herstel, geen gemiste dag; je streak blijft heel.</p>';
+    }
+    sched.forEach(function(h){ const hs=habitStreak(h.id); list.appendChild(habitRow(h, hs>0?'<div class="hstreak">🔥'+hs+'</div>':'')); });
+    if(flex.length){
+      const sub=document.createElement("div"); sub.className="section-label"; sub.style.cssText="margin:14px 4px 2px"; sub.textContent="Flexibel — deze week"; list.appendChild(sub);
+      flex.forEach(function(h){ const c=habitWeekCount(h,monKey), tgt=(habitFreq(h).perWeek||3); list.appendChild(habitRow(h, '<div class="hstreak">'+c+'/'+tgt+'</div>')); });
+    }
+    if(otherDays.length){
+      const note=document.createElement("p"); note.className="sub"; note.style.margin="10px 0 0";
+      note.textContent=otherDays.length+" gewoonte"+(otherDays.length===1?"":"n")+" gepland op andere dagen.";
+      list.appendChild(note);
+    }
+  }
+  const er=document.getElementById("energyRow"); er.innerHTML="";
+  for(let i=1;i<=5;i++){
+    const b=document.createElement("button"); b.textContent=i; if(l.energy===i) b.className="on";
+    (function(val){ b.onclick=function(){ l.energy=(l.energy===val?0:val); save(); renderToday(); }; })(i);
+    er.appendChild(b);
+  }
+  document.getElementById("deepWork").value = l.deep||"";
+  for(let i=0;i<3;i++) document.getElementById("prio"+i).value = l.prio[i]||"";
+  document.getElementById("good").value = l.good||"";
+  document.getElementById("better").value = l.better||"";
+  document.getElementById("tomorrow").value = l.tomorrow||"";
+  var noteEl=document.getElementById("note"); if(noteEl) noteEl.value=l.note||"";
+  const n=dayPlanned(activeDate), done=dayDoneScheduled(activeDate), rate=n?done/n:0;
+  document.getElementById("ringFill").style.strokeDashoffset = 226-(226*(n?rate:1));
+  document.getElementById("todayPct").textContent = n? (Math.round(rate*100)+"%") : "rust";
+  document.getElementById("todayDone").textContent=done;
+  document.getElementById("todayTotal").textContent=n;
+  document.getElementById("todayStreak").textContent=currentStreak();
+  renderMissTwice();
+  renderAffirmations();
+  renderSleep();
+  updateStreakProgress();
+  applyMoreState();
+}
+
+/* ---------- Mis nooit twee keer ---------- */
+function renderMissTwice(){
+  const box=document.getElementById("missTwice"); if(!box) return;
+  box.innerHTML="";
+  if(activeDate!==TODAY) return;                         // alleen relevant voor vandaag
+  if(activeHabits().length===0) return;
+  if(DB.settings && DB.settings.missDismissed===TODAY) return;   // vandaag weggeklikt
+  const y=new Date(); y.setDate(y.getDate()-1);
+  if(dayHolds(iso(y))!=="broken") return;                // gisteren was rust of gedaan → niets aan de hand
+  if(dayPlanned(TODAY)===0) return;                      // vandaag rustdag → geen druk
+  if(dayDoneScheduled(TODAY)>=dayPlanned(TODAY)) return; // vandaag al af
+  // niet zeuren bij gloednieuwe gebruikers: toon alleen als er eerder een gedane dag was
+  let priorActive=false;
+  for(let i=2;i<=14;i++){ const d=new Date(); d.setDate(d.getDate()-i); if(dayHolds(iso(d))==="done"){ priorActive=true; break; } }
+  if(!priorActive) return;
+  const el=document.createElement("div"); el.className="miss";
+  el.innerHTML='<div class="mi">🛟</div><div class="mt"><b>Mis nooit twee keer</b>Gisteren stond er niets — en dat is oké, één keer is menselijk. Eén gewoonte vandaag afvinken houdt je systeem heel.</div><button class="miss-x" onclick="dismissMiss()" aria-label="Sluiten">✕</button>';
+  box.appendChild(el);
+}
+function dismissMiss(){ if(!DB.settings) DB.settings={}; DB.settings.missDismissed=TODAY; save(); renderMissTwice(); }
+
+/* Progressive disclosure: extra logvelden in-/uitklappen */
+function applyMoreState(){
+  const box=document.getElementById("moreLogging"), btn=document.getElementById("moreToggle");
+  if(!box||!btn) return;
+  const open=!!(DB.settings&&DB.settings.expandLogging);
+  box.style.display=open?"block":"none";
+  btn.textContent=open? "➖ Minder loggen" : "➕ Meer loggen (energie, slaap, prioriteiten, reflectie)";
+}
+function toggleMore(){ if(!DB.settings) DB.settings={}; DB.settings.expandLogging=!DB.settings.expandLogging; save(); applyMoreState(); }
+
+function sleepHours(bed,wake){
+  if(!bed||!wake) return null;
+  const b=bed.split(":"), w=wake.split(":");
+  if(b.length<2||w.length<2) return null;
+  let diff=(Number(w[0])*60+Number(w[1])) - (Number(b[0])*60+Number(b[1]));
+  if(diff<=0) diff+=1440;
+  return diff/60;
+}
+function renderSleep(){
+  const l=dayLog(activeDate);
+  document.getElementById("sleepBed").value=l.sleepBed||"";
+  document.getElementById("sleepWake").value=l.sleepWake||"";
+  document.getElementById("sleepGoal").value=(DB.settings.sleepGoal!==undefined?DB.settings.sleepGoal:7);
+  const q=document.getElementById("sleepQual"); q.innerHTML="";
+  for(let i=1;i<=5;i++){ const b=document.createElement("button"); b.textContent=i; if(l.sleepQuality===i) b.className="on";
+    (function(v){ b.onclick=function(){ l.sleepQuality=(l.sleepQuality===v?0:v); save(); renderSleep(); }; })(i); q.appendChild(b); }
+  const h=sleepHours(l.sleepBed,l.sleepWake);
+  const res=document.getElementById("sleepResult");
+  if(h===null){ res.style.display="none"; }
+  else {
+    const goal=Number(DB.settings.sleepGoal||7); const ok=h>=goal;
+    res.style.display="block";
+    res.textContent=h.toFixed(1).replace(".",",")+" uur geslapen — "+(ok?"doel gehaald ✓":"onder je doel van "+goal+" u");
+    res.style.background= ok? "rgba(94,196,138,.16)":"rgba(224,122,107,.16)";
+    res.style.color= ok? "var(--good)":"var(--bad)";
+    res.style.border="1px solid "+(ok?"var(--good)":"var(--bad)");
+  }
+}
+
+/* ---------- Streaks: statusladder + mijlpalen ---------- */
+const RANKS=[
+  {min:0,   name:"Ontwakende",         icon:"🌱"},
+  {min:3,   name:"Amateur",            icon:"🔰"},
+  {min:7,   name:"Beginner",           icon:"🥉"},
+  {min:14,  name:"Gevorderde",         icon:"🥈"},
+  {min:21,  name:"Toegewijde",         icon:"🔥"},
+  {min:30,  name:"Volhouder",          icon:"🥇"},
+  {min:45,  name:"Vakman",             icon:"⚙️"},
+  {min:60,  name:"Discipline-bouwer",  icon:"🛠️"},
+  {min:90,  name:"Gewoonte-architect", icon:"🏛️"},
+  {min:120, name:"Meester",            icon:"💎"},
+  {min:180, name:"Grootmeester",       icon:"🦅"},
+  {min:270, name:"Wijze",              icon:"🧭"},
+  {min:365, name:"Legende",            icon:"👑"}
+];
+function rankFor(days){
+  days=days||0; let idx=0;
+  for(let i=0;i<RANKS.length;i++){ if(days>=RANKS[i].min) idx=i; }
+  const base=RANKS[idx];
+  let next = idx<RANKS.length-1 ? {name:RANKS[idx+1].name, min:RANKS[idx+1].min} : null;
+  let prestige=0;
+  if(base.name==="Legende"){ prestige=Math.floor(days/365); next={name:"Legende ✦"+(prestige+1), min:(prestige+1)*365}; }
+  return {name:base.name, icon:base.icon, min:base.min, next:next, prestige:prestige};
+}
+function rankLabel(r){ return r.name + (r.prestige>1? " ✦"+r.prestige : ""); }
+const STREAK_MSGS={
+  1:"Dag één staat. De eerste steen ligt. 🌱",
+  2:"Twee op rij — je weigert twee keer te missen.",
+  3:"Je bent goed bezig, ga zo door! 🔰",
+  5:"Vijf dagen — dit begint een ritme te worden.",
+  7:"Een hele week! Heel knap. 🥉",
+  10:"Dubbele cijfers. Je laat zien dat je het meent.",
+  14:"Twee weken — je begint een discipline te ontwikkelen. 🥈",
+  21:"21 dagen: het fundament van een gewoonte ligt er. 🔥",
+  30:"Een maand vol! Dit is wie je aan het worden bent. 🥇",
+  45:"45 dagen vakmanschap — consistentie wordt je tweede natuur. ⚙️",
+  60:"60 dagen. Je bouwt iets dat blijft staan. 🛠️",
+  75:"75 dagen — de meesten haken hier allang af. Jij niet.",
+  90:"90 dagen! Je hebt een gewoonte gearchitecteerd. 🏛️",
+  120:"120 dagen. Meesterschap is geen toeval meer. 💎",
+  150:"150 dagen trouw aan jezelf. Stil maar krachtig.",
+  180:"Een half jaar! Grootmeester van je eigen ritme. 🦅",
+  270:"270 dagen — wijsheid komt door herhaling. 🧭",
+  365:"Een heel jaar. Je bent een legende van je eigen leven. 👑"
+};
+function isMilestone(n){ return (n>0) && (STREAK_MSGS[n]!==undefined || n%100===0 || (n>365 && n%365===0)); }
+function streakMessage(n){
+  if(STREAK_MSGS[n]) return STREAK_MSGS[n];
+  if(n>365 && n%365===0){ return (n/365)+" jaar consistent. Geen eindstreep — alleen de volgende dag, en jij staat er. ✦"; }
+  if(n%100===0) return n+" dagen. Mijlpaal na mijlpaal; de reis stopt nooit, en dat is precies de bedoeling.";
+  return "Sterke streak van "+n+" dagen. Door!";
+}
+function highestMilestone(low, high){
+  let best=null, lo=Math.max(low,0);
+  for(let n=lo+1;n<=high;n++){ if(isMilestone(n)) best=n; }
+  return best;
+}
+function updateStreakProgress(){
+  const st=currentStreak();
+  if(st>(DB.settings.bestStreak||0)) DB.settings.bestStreak=st;
+  const r=rankFor(DB.settings.bestStreak||0);
+  let rankUpgraded=false;
+  if(r.min > (DB.settings.lastRankMin!==undefined?DB.settings.lastRankMin:-1)){ rankUpgraded=true; DB.settings.lastRankMin=r.min; }
+  let celebrate=false, msg="", shownStreak=st;
+  const last=(DB.settings.lastCelebratedStreak!==undefined?DB.settings.lastCelebratedStreak:0);
+  if(st<last){ DB.settings.lastCelebratedStreak=st; }
+  else if(st>last){
+    const m=highestMilestone(last, st);
+    DB.settings.lastCelebratedStreak=st;
+    if(m!==null){ celebrate=true; msg=streakMessage(m); }
+  }
+  save();
+  renderRankBadge();
+  if(celebrate || rankUpgraded){
+    if(!celebrate){ msg="Een nieuwe status bereikt — je groei wordt zichtbaar."; }
+    showCelebration(shownStreak, msg, r, rankUpgraded);
+  }
+}
+function renderRankBadge(){
+  const el=document.getElementById("rankBadge"); if(!el) return;
+  const r=rankFor(DB.settings.bestStreak||0);
+  el.textContent = r.icon+" "+rankLabel(r);
+}
+function showCelebration(st, msg, r, rankUpgraded){
+  document.getElementById("celIcon").textContent = r.icon||"🔥";
+  document.getElementById("celStreak").textContent = "🔥 "+st+" dagen op rij";
+  document.getElementById("celMsg").textContent = msg;
+  document.getElementById("celRank").innerHTML = (rankUpgraded? "<span class='cel-new'>Nieuwe status!</span><br>" : "Status: ")+r.icon+" "+esc(rankLabel(r));
+  document.getElementById("celebrate").classList.add("show");
+}
+function closeCelebrate(){ document.getElementById("celebrate").classList.remove("show"); }
+function renderRankCard(){
+  const c=document.getElementById("rankCard"); if(!c) return;
+  const best=DB.settings.bestStreak||0; const cur=currentStreak(); const r=rankFor(best);
+  let html='<div style="display:flex;align-items:center;gap:14px">';
+  html+='<div style="font-size:42px;line-height:1">'+r.icon+'</div>';
+  html+='<div><div style="font-size:12px;color:var(--muted)">Jouw status</div>';
+  html+='<div style="font-size:21px;font-weight:800;color:var(--accent2)">'+esc(rankLabel(r))+'</div>';
+  html+='<div style="font-size:12px;color:var(--soft)">Langste streak: '+best+' dagen · nu '+cur+'</div></div></div>';
+  if(r.next){
+    const prog=Math.max(0,Math.min(1,(best-r.min)/(r.next.min-r.min))); const left=r.next.min-best;
+    html+='<div class="bar" style="margin-top:16px"><div class="bl"><span>Volgende: '+esc(r.next.name)+'</span><span>nog '+left+' '+(left===1?'dag':'dagen')+'</span></div><div class="track"><div class="fill" style="width:'+(prog*100)+'%"></div></div></div>';
+  }
+  c.innerHTML=html;
+}
+
+/* ---------- Rendering: Dashboard ---------- */
+function renderDash(){
+  renderRankCard();
+  const dates=Object.keys(DB.logs).filter(isLogged).sort();
+  let totDone=0, totSlots=0, totDeep=0;
+  dates.forEach(function(d){ const p=dayPlanned(d); if(p>0){ totDone+=dayDoneScheduled(d); totSlots+=p; } totDeep+=(DB.logs[d].deep||0); });
+  document.getElementById("sStreak").textContent=currentStreak();
+  document.getElementById("sCompl").textContent=(totSlots? Math.round(totDone/totSlots*100):0)+"%";
+  document.getElementById("sDays").textContent=dates.length;
+  document.getElementById("sDeep").textContent=(totDeep/60).toFixed(1);
+  let sH=0,sN=0; dates.forEach(function(d){ const hh=sleepHours(DB.logs[d].sleepBed,DB.logs[d].sleepWake); if(hh!==null){ sH+=hh; sN++; } });
+  document.getElementById("sAvgSleep").textContent = sN? (sH/sN).toFixed(1) : "—";
+  const hb=document.getElementById("habitBars"); hb.innerHTML="";
+  activeHabits().forEach(function(h){
+    // tel over dagen waarop deze gewoonte gepland was (flexibel: alle gelogde dagen)
+    const elig=dates.filter(function(d){ return isFlexible(h) ? true : isScheduled(h,d); });
+    const dd=elig.filter(function(d){ return DB.logs[d].habits&&DB.logs[d].habits[h.id]; }).length;
+    const pct=elig.length? Math.round(dd/elig.length*100):0;
+    const hs=isFlexible(h)? 0 : habitStreak(h.id);
+    const short=h.name.split(":")[0];
+    const el=document.createElement("div"); el.className="bar";
+    el.innerHTML='<div class="bl"><span>'+esc(short)+' <span style="color:var(--muted);font-weight:400">· '+esc(freqLabel(h))+'</span></span><span>'+(hs>0?'🔥'+hs+' · ':'')+pct+'%</span></div><div class="track"><div class="fill" style="width:'+pct+'%"></div></div>';
+    hb.appendChild(el);
+  });
+  renderHeat();
+}
+
+/* ---------- Heatmap: 14 dagen / maand / jaar ---------- */
+let heatRange="d14", heatMonth=null;
+function cellColor(key){
+  if(!DB.logs[key]) return "#16302b";
+  const r=dayRate(key);
+  return r===0? "#244a42" : r<.34? "#3c6b4a" : r<.67? "#4ca06a" : "#5ec48a";
+}
+function heatCell(key,size){
+  const cell=document.createElement("div");
+  const has=!!DB.logs[key];
+  cell.title=key+" — "+(has?Math.round(dayRate(key)*100)+"%":"niets gelogd");
+  cell.style.cssText="width:"+size+"px;height:"+size+"px;border-radius:"+(size>=16?5:3)+"px;background:"+cellColor(key)+";border:1px solid var(--line);cursor:pointer;flex:0 0 auto";
+  if(key===TODAY) cell.style.boxShadow="0 0 0 2px var(--accent2)";
+  cell.onclick=function(){ showDayDetail(key); };
+  return cell;
+}
+function setHeatRange(r){ heatRange=r; renderHeat(); }
+function renderHeat(){
+  const seg=document.getElementById("heatSeg");
+  if(seg) seg.querySelectorAll("button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-r")===heatRange); });
+  const head=document.getElementById("heatHead"), heat=document.getElementById("heat");
+  if(!heat) return; head.innerHTML=""; heat.innerHTML="";
+
+  if(heatRange==="d14"){
+    head.style.display="block"; head.textContent="Laatste 14 dagen — tik op een dag voor details.";
+    heat.style.cssText="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px";
+    for(let i=13;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); heat.appendChild(heatCell(iso(d),18)); }
+
+  } else if(heatRange==="month"){
+    if(!heatMonth){ const t=new Date(); heatMonth=new Date(t.getFullYear(),t.getMonth(),1); }
+    const y=heatMonth.getFullYear(), m=heatMonth.getMonth();
+    head.style.display="flex";
+    const prev=document.createElement("button"); prev.className="iconbtn"; prev.textContent="‹ vorige";
+    prev.onclick=function(){ heatMonth=new Date(y,m-1,1); renderHeat(); };
+    const lab=document.createElement("span"); lab.style.cssText="font-weight:700;color:var(--ink)"; lab.textContent=MON[m]+" "+y;
+    const next=document.createElement("button"); next.className="iconbtn"; next.textContent="volgende ›";
+    const now=new Date(); const curM=(y===now.getFullYear() && m===now.getMonth());
+    if(curM){ next.style.visibility="hidden"; } else { next.onclick=function(){ heatMonth=new Date(y,m+1,1); renderHeat(); }; }
+    head.appendChild(prev); head.appendChild(lab); head.appendChild(next);
+    heat.style.cssText="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px;justify-items:center";
+    ["ma","di","wo","do","vr","za","zo"].forEach(function(x){ const h=document.createElement("div"); h.textContent=x; h.style.cssText="font-size:10px;color:var(--muted)"; heat.appendChild(h); });
+    const offset=(new Date(y,m,1).getDay()+6)%7;
+    for(let i=0;i<offset;i++) heat.appendChild(document.createElement("div"));
+    const dim=new Date(y,m+1,0).getDate();
+    for(let day=1;day<=dim;day++){
+      const key=iso(new Date(y,m,day));
+      const wrap=document.createElement("div"); wrap.style.cssText="display:flex;flex-direction:column;align-items:center;gap:2px";
+      const num=document.createElement("div"); num.textContent=day; num.style.cssText="font-size:9px;color:var(--muted)";
+      wrap.appendChild(heatCell(key,26)); wrap.appendChild(num); heat.appendChild(wrap);
+    }
+
+  } else { // year
+    head.style.display="block"; head.textContent="Afgelopen 12 maanden — scroll horizontaal, tik op een dag.";
+    const scroll=document.createElement("div"); scroll.style.cssText="overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch";
+    const grid=document.createElement("div"); grid.style.cssText="display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,12px);gap:3px;width:max-content";
+    const today=new Date(); const start=mondayOf(today); start.setDate(start.getDate()-52*7);
+    let d=new Date(start);
+    while(d<=today){ grid.appendChild(heatCell(iso(d),11)); d.setDate(d.getDate()+1); }
+    scroll.appendChild(grid); heat.style.cssText="margin-top:10px"; heat.appendChild(scroll);
+    setTimeout(function(){ scroll.scrollLeft=scroll.scrollWidth; },0);
+  }
+}
+
+/* ---------- Dagdetail (tik op heatmap-cel) ---------- */
+function showDayDetail(key){
+  const card=document.getElementById("dayDetailCard"); if(!card) return;
+  const l=DB.logs[key]; const d=fromIso(key);
+  const human=DAYS[d.getDay()]+" "+d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear();
+  let html='<div class="cardhead"><h2 style="margin:0">'+esc(human)+'</h2><button class="iconbtn" onclick="hideDayDetail()">Sluiten</button></div>';
+  if(!l || !isLogged(key)){
+    html+='<p class="sub" style="margin:8px 0 10px">Niets gelogd op deze dag.</p>';
+    html+='<button class="addbtn" onclick="editDay(\''+key+'\')">Deze dag invullen →</button>';
+  } else {
+    const nn=dayPlanned(key), doneN=dayDoneScheduled(key);
+    if(nn===0){ html+='<p class="sub" style="margin:8px 0 6px">🌿 Rustdag — geen gewoonten gepland.</p>'; }
+    else { html+='<p class="sub" style="margin:8px 0 6px">'+doneN+' van '+nn+' geplande gewoonten · '+Math.round(dayRate(key)*100)+'%</p>'; }
+    activeHabits().forEach(function(h){
+      const ok=!!(l.habits&&l.habits[h.id]);
+      const planned=isScheduled(h,key)||isFlexible(h);
+      const mark = !planned ? '<span style="color:var(--muted)">·</span>' : (ok?'✅':'⬜️');
+      const suffix = !planned ? ' <span style="color:var(--muted);font-size:11px">(niet gepland)</span>' : (isFlexible(h)?' <span style="color:var(--muted);font-size:11px">(flexibel)</span>':'');
+      html+='<div class="law"><b>'+mark+'</b><span>'+esc(h.name.split(":")[0])+suffix+'</span></div>';
+    });
+    const extra=[];
+    if(l.energy>0) extra.push("Energie "+l.energy+"/5");
+    const hh=sleepHours(l.sleepBed,l.sleepWake); if(hh!==null) extra.push("Slaap "+hh.toFixed(1).replace(".",",")+" u");
+    if(l.deep>0) extra.push("Diep werk "+l.deep+" min");
+    if(extra.length) html+='<p class="sub" style="margin:8px 0 0">'+esc(extra.join(" · "))+'</p>';
+    const refl=[];
+    if(l.good) refl.push(["Wat ging goed",l.good]);
+    if(l.better) refl.push(["Wat kon beter",l.better]);
+    if(l.tomorrow) refl.push(["Morgen anders",l.tomorrow]);
+    if(l.note) refl.push(["Dagboek",l.note]);
+    refl.forEach(function(p){ html+='<div class="qa"><div class="q">'+esc(p[0])+'</div><div class="a">'+esc(p[1])+'</div></div>'; });
+    html+='<button class="addbtn" onclick="editDay(\''+key+'\')" style="margin-top:10px">Bewerk deze dag →</button>';
+  }
+  card.innerHTML=html; card.style.display="block";
+  card.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function hideDayDetail(){ const c=document.getElementById("dayDetailCard"); if(c) c.style.display="none"; }
+function editDay(key){ activeDate=key; hideDayDetail(); switchTab("today"); }
+
+/* ---------- Rendering: Week ---------- */
+let curWeek;
+function renderWeekPicker(){
+  const start=mondayOf(fromIso("2026-06-01"));
+  const wp=document.getElementById("weekPick"); wp.innerHTML="";
+  const thisMon=iso(mondayOf(new Date()));
+  if(!curWeek) curWeek=thisMon;
+  for(let i=0;i<13;i++){
+    const m=new Date(start); m.setDate(start.getDate()+i*7); const key=iso(m);
+    const b=document.createElement("div"); b.className="wk"+(curWeek===key?" on":"");
+    b.innerHTML="W"+(i+1)+"<small>"+m.getDate()+"/"+(m.getMonth()+1)+"</small>";
+    (function(k){ b.onclick=function(){ curWeek=k; renderWeek(); }; })(key);
+    wp.appendChild(b);
+  }
+}
+function weekCompl(mondayKey){
+  const mon=fromIso(mondayKey); let done=0,slots=0;
+  for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); const k=iso(d);
+    const p=dayPlanned(k); if(p>0){ done+=dayDoneScheduled(k); slots+=p; } }
+  return slots? Math.round(done/slots*100):0;
+}
+function renderWeek(){
+  renderWeekPicker();
+  const w = DB.weeks[curWeek] || (DB.weeks[curWeek]={wins:"",obst:"",adj:""});
+  const mon=fromIso(curWeek);
+  document.getElementById("wkLabel").textContent = mon.getDate()+" "+MON[mon.getMonth()];
+  document.getElementById("wkCompl").textContent = weekCompl(curWeek)+"%";
+  document.getElementById("wkWins").value=w.wins||"";
+  document.getElementById("wkObst").value=w.obst||"";
+  document.getElementById("wkAdj").value=w.adj||"";
+  document.getElementById("sumEmail").value=DB.settings.email||"";
+}
+
+/* ---------- Weekoverzicht (samenvatting + mail) ---------- */
+function buildWeekSummary(weekKey){
+  const mon=fromIso(weekKey); const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  const period = mon.getDate()+" "+MON[mon.getMonth()]+" t/m "+sun.getDate()+" "+MON[sun.getMonth()]+" "+sun.getFullYear();
+  const hs=activeHabits();
+  const dayKeys=[]; for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); dayKeys.push(iso(d)); }
+  const logged=dayKeys.filter(isLogged);
+  const compl=weekCompl(weekKey);
+  const perHabit=hs.map(function(h){
+    const elig=dayKeys.filter(function(k){ return (isFlexible(h)?DB.logs[k]:isScheduled(h,k)); });
+    const c=elig.filter(function(k){return DB.logs[k]&&DB.logs[k].habits&&DB.logs[k].habits[h.id];}).length;
+    const den=isFlexible(h)?(habitFreq(h).perWeek||elig.length||1):elig.length;
+    return {name:h.name, done:c, den:den, pct: den?Math.round(c/den*100):0, freq:freqLabel(h)};
+  });
+  let eSum=0,eCount=0,deep=0;
+  logged.forEach(function(k){ const l=DB.logs[k]; if(l.energy>0){eSum+=l.energy;eCount++;} deep+=(l.deep||0); });
+  const eAvg = eCount? (eSum/eCount).toFixed(1) : "—";
+  const wr = DB.weeks[weekKey]||{};
+
+  const L=[];
+  L.push("WEEKOVERZICHT — DISCIPLINE TRACKER");
+  L.push("Periode: "+period);
+  L.push("");
+  L.push("== SAMENVATTING ==");
+  L.push("Completion deze week: "+compl+"%");
+  L.push("Dagen gelogd: "+logged.length+" / 7");
+  L.push("Huidige streak: "+currentStreak()+" dagen");
+  L.push("Status: "+rankFor(DB.settings.bestStreak||0).icon+" "+rankLabel(rankFor(DB.settings.bestStreak||0))+" (langste streak "+(DB.settings.bestStreak||0)+" dagen)");
+  L.push("Gemiddelde energie: "+eAvg+" / 5");
+  L.push("Diep werk totaal: "+(deep/60).toFixed(1)+" uur");
+  let slH=0,slN=0,slGoal=0,slQ=0,slQN=0; const sGoalV=Number(DB.settings.sleepGoal||7);
+  logged.forEach(function(k){ const l=DB.logs[k]; const hh=sleepHours(l.sleepBed,l.sleepWake); if(hh!==null){ slH+=hh; slN++; if(hh>=sGoalV) slGoal++; } if(l.sleepQuality>0){ slQ+=l.sleepQuality; slQN++; } });
+  L.push("Gemiddelde slaap: "+(slN? (slH/slN).toFixed(1)+" u ("+slGoal+"/"+slN+" nachten ≥ "+sGoalV+" u)" : "—"));
+  if(slQN) L.push("Gemiddelde slaapkwaliteit: "+(slQ/slQN).toFixed(1)+" / 5");
+  L.push("");
+  L.push("Per gewoonte:");
+  perHabit.forEach(function(p){ L.push("  - "+p.name+" ["+p.freq+"]: "+p.done+"/"+p.den+" ("+p.pct+"%)"); });
+  L.push("");
+
+  L.push("== KEY TAKE-AWAYS ==");
+  if(perHabit.length){
+    const sorted=perHabit.slice().sort(function(a,b){return b.pct-a.pct;});
+    const best=sorted[0], weak=sorted[sorted.length-1];
+    L.push("- Sterkste gewoonte: "+best.name+" ("+best.pct+"%).");
+    if(weak.name!==best.name) L.push("- Grootste aandachtspunt: "+weak.name+" ("+weak.pct+"%).");
+    L.push("- "+(compl>=80?"Sterke week — consistentie boven 80%.":compl>=50?"Redelijke week — ruimte om consistenter te worden.":"Pittige week — focus op klein en consistent."));
+  }
+  if(eAvg!=="—") L.push("- Gemiddelde energie was "+eAvg+"/5"+(parseFloat(eAvg)<3?" — let op rust en herstel.":"."));
+  L.push("");
+
+  L.push("== FOCUSPUNTEN VOLGENDE WEEK ==");
+  if(perHabit.length){
+    const weak=perHabit.slice().sort(function(a,b){return a.pct-b.pct;})[0];
+    L.push("- Verhoog consistentie op: "+weak.name+".");
+  }
+  if(wr.adj) L.push("- Geplande aanpassing: "+wr.adj);
+  L.push("- Mis nooit twee keer achter elkaar. 1% beter per dag telt op.");
+  L.push("");
+
+  if(wr.wins||wr.obst){
+    L.push("== WEEKREVIEW ==");
+    if(wr.wins) L.push("Wins: "+wr.wins);
+    if(wr.obst) L.push("Obstakels: "+wr.obst);
+    L.push("");
+  }
+
+  const refl=[];
+  logged.forEach(function(k){ const l=DB.logs[k]; const d=fromIso(k);
+    const parts=[];
+    if(l.good) parts.push("goed: "+l.good);
+    if(l.better) parts.push("beter: "+l.better);
+    if(l.tomorrow) parts.push("morgen anders: "+l.tomorrow);
+    if(l.note) parts.push("dagboek: "+l.note);
+    if(parts.length) refl.push(DAYS[d.getDay()]+" "+d.getDate()+"/"+(d.getMonth()+1)+" — "+parts.join(" | "));
+  });
+  if(refl.length){ L.push("== REFLECTIES =="); refl.forEach(function(r){L.push("- "+r);}); L.push(""); }
+
+  L.push("Verzonden vanuit je Discipline Tracker.");
+  return { subject:"Weekoverzicht Discipline Tracker — "+period, body:L.join("\n") };
+}
+function emailSummary(){
+  const wk = curWeek || iso(mondayOf(new Date()));
+  const email=(DB.settings.email||"").trim();
+  if(!email){ toast("Vul eerst een e-mailadres in"); return; }
+  const s=buildWeekSummary(wk);
+  const url="mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent(s.subject)+"&body="+encodeURIComponent(s.body);
+  window.location.href=url;
+  toast("Mailapp wordt geopend…");
+}
+
+/* ---------- Affirmaties ---------- */
+let affirmIndex=0, affirmInit=false;
+function dayOfYear(d){ const s=new Date(d.getFullYear(),0,0); return Math.floor((d-s)/86400000); }
+function renderAffirmations(){
+  const arr=DB.affirmations||[];
+  const t=document.getElementById("affirmText");
+  if(!t) return;
+  if(!arr.length){ t.textContent="Voeg affirmaties toe op het tabblad Identiteit."; return; }
+  if(!affirmInit){ affirmIndex = dayOfYear(new Date()) % arr.length; affirmInit=true; }
+  affirmIndex=((affirmIndex%arr.length)+arr.length)%arr.length;
+  t.textContent=arr[affirmIndex];
+}
+function cycleAffirmation(dir){ const arr=DB.affirmations||[]; if(!arr.length) return; affirmInit=true; affirmIndex+=dir; renderAffirmations(); }
+function speakAffirmation(){
+  if(typeof speechSynthesis==="undefined"){ toast("Voorlezen niet ondersteund op dit toestel"); return; }
+  if(speechSynthesis.speaking){ speechSynthesis.cancel(); return; }
+  const arr=DB.affirmations||[]; if(!arr.length) return;
+  arr.forEach(function(a){ const u=new SpeechSynthesisUtterance(a); u.lang="nl-NL"; u.rate=0.9; speechSynthesis.speak(u); });
+  toast("Affirmaties worden voorgelezen");
+}
+let editAffirm=false;
+function startEditAffirm(){ editAffirm=true; renderAffirmEditor(); }
+function renderAffirmEditor(){
+  const c=document.getElementById("affirmEditCard"); if(!c) return; c.innerHTML="";
+  const arr=DB.affirmations||(DB.affirmations=[]);
+  if(!editAffirm){
+    c.innerHTML='<div class="cardhead"><h2 style="margin:0">Affirmaties</h2><button class="iconbtn" onclick="startEditAffirm()">✎ Bewerken</button></div>';
+    if(!arr.length){ c.insertAdjacentHTML("beforeend",'<p class="sub">Nog geen affirmaties.</p>'); }
+    arr.forEach(function(a){ const el=document.createElement("div"); el.className="qa"; el.innerHTML='<div class="a">'+esc(a)+'</div>'; c.appendChild(el); });
+  } else {
+    const rows=[];
+    arr.forEach(function(a,idx){
+      const box=document.createElement("div"); box.style.cssText="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px";
+      const ta=document.createElement("textarea"); ta.value=a; ta.style.minHeight="50px";
+      const del=document.createElement("button"); del.className="iconbtn danger"; del.textContent="🗑"; del.style.flex="0 0 auto";
+      (function(i){ del.onclick=function(){ rows.forEach(function(r){ arr[r.i]=r.ta.value; }); arr.splice(i,1); save(); renderAffirmEditor(); }; })(idx);
+      box.appendChild(ta); box.appendChild(del); c.appendChild(box); rows.push({ta:ta,i:idx});
+    });
+    const add=document.createElement("button"); add.className="addbtn"; add.textContent="+ Affirmatie toevoegen";
+    add.onclick=function(){ rows.forEach(function(r){ arr[r.i]=r.ta.value; }); arr.push("Ik ben..."); save(); renderAffirmEditor(); };
+    c.appendChild(add);
+    const row=document.createElement("div"); row.className="btnrow";
+    const sv=document.createElement("button"); sv.className="btn-save"; sv.textContent="Opslaan";
+    sv.onclick=function(){ rows.forEach(function(r){ arr[r.i]=r.ta.value; }); DB.affirmations=arr.filter(function(x){return x&&x.trim();}); save(); editAffirm=false; renderAffirmEditor(); renderAffirmations(); toast("Opgeslagen ✓"); };
+    const cn=document.createElement("button"); cn.className="btn-cancel"; cn.textContent="Klaar";
+    cn.onclick=function(){ rows.forEach(function(r){ arr[r.i]=r.ta.value; }); DB.affirmations=arr.filter(function(x){return x&&x.trim();}); save(); editAffirm=false; renderAffirmEditor(); renderAffirmations(); };
+    row.appendChild(sv); row.appendChild(cn); c.appendChild(row);
+  }
+}
+
+/* ---------- Agenda-export (.ics) ---------- */
+function icsStamp(d){ function p(n){return String(n).padStart(2,"0");}
+  return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"T"+p(d.getHours())+p(d.getMinutes())+"00"; }
+function nextWeekday(dow, hh, mm){
+  const now=new Date(); const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0,0);
+  let add=(Number(dow)-d.getDay()+7)%7;
+  if(add===0 && d<=now) add=7;
+  d.setDate(d.getDate()+add); return d;
+}
+function buildICS(){
+  const s=DB.settings; const L=[]; const stamp=icsStamp(new Date());
+  L.push("BEGIN:VCALENDAR"); L.push("VERSION:2.0"); L.push("PRODID:-//Discipline Tracker//NL//"); L.push("CALSCALE:GREGORIAN");
+  // dagelijks
+  const dt=(s.reminderTime||"20:00").split(":");
+  const dStart=new Date(); dStart.setHours(Number(dt[0]),Number(dt[1]),0,0);
+  if(dStart<=new Date()) dStart.setDate(dStart.getDate()+1);
+  L.push("BEGIN:VEVENT"); L.push("UID:daily-"+Date.now()+"@discipline-tracker"); L.push("DTSTAMP:"+stamp);
+  L.push("DTSTART:"+icsStamp(dStart)); L.push("DURATION:PT10M"); L.push("RRULE:FREQ=DAILY");
+  L.push("SUMMARY:Discipline Tracker — gewoonten afvinken");
+  L.push("DESCRIPTION:Open je Discipline Tracker en vink je gewoonten af.");
+  L.push("BEGIN:VALARM"); L.push("TRIGGER:PT0M"); L.push("ACTION:DISPLAY"); L.push("DESCRIPTION:Gewoonten afvinken"); L.push("END:VALARM");
+  L.push("END:VEVENT");
+  // wekelijks
+  const wt=(s.weeklyTime||"18:00").split(":");
+  const dow=(s.weeklyDay!==undefined?s.weeklyDay:0);
+  const wStart=nextWeekday(dow, Number(wt[0]), Number(wt[1]));
+  const BYDAY=["SU","MO","TU","WE","TH","FR","SA"][Number(dow)];
+  L.push("BEGIN:VEVENT"); L.push("UID:weekly-"+Date.now()+"@discipline-tracker"); L.push("DTSTAMP:"+stamp);
+  L.push("DTSTART:"+icsStamp(wStart)); L.push("DURATION:PT15M"); L.push("RRULE:FREQ=WEEKLY;BYDAY="+BYDAY);
+  L.push("SUMMARY:Discipline Tracker — weekoverzicht mailen");
+  L.push("DESCRIPTION:Open je Discipline Tracker en mail/print je weekoverzicht.");
+  L.push("BEGIN:VALARM"); L.push("TRIGGER:PT0M"); L.push("ACTION:DISPLAY"); L.push("DESCRIPTION:Weekoverzicht mailen"); L.push("END:VALARM");
+  L.push("END:VEVENT");
+  L.push("END:VCALENDAR");
+  return L.join("\r\n");
+}
+function downloadICS(){
+  const blob=new Blob([buildICS()],{type:"text/calendar;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="discipline-tracker.ics"; a.click(); toast("Agenda-bestand gedownload");
+}
+
+/* ---------- Visueel PDF-weekoverzicht (print) ---------- */
+function buildWeekReportDOM(weekKey){
+  const mon=fromIso(weekKey); const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  const period=mon.getDate()+" "+MON[mon.getMonth()]+" t/m "+sun.getDate()+" "+MON[sun.getMonth()]+" "+sun.getFullYear();
+  const hs=activeHabits();
+  const dayKeys=[]; for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); dayKeys.push(iso(d)); }
+  const logged=dayKeys.filter(isLogged);
+  const compl=weekCompl(weekKey);
+  let eSum=0,eCount=0,deep=0; logged.forEach(function(k){const l=DB.logs[k]; if(l.energy>0){eSum+=l.energy;eCount++;} deep+=(l.deep||0);});
+  const eAvg=eCount?(eSum/eCount).toFixed(1):"—";
+  let slH=0,slN=0; logged.forEach(function(k){ const hh=sleepHours(DB.logs[k].sleepBed,DB.logs[k].sleepWake); if(hh!==null){ slH+=hh; slN++; } });
+  const slAvg = slN? (slH/slN).toFixed(1) : "—";
+  const perHabit=hs.map(function(h){ const elig=logged.filter(function(k){ return (isFlexible(h)?true:isScheduled(h,k)); }); const c=elig.filter(function(k){return DB.logs[k].habits&&DB.logs[k].habits[h.id];}).length; const den=isFlexible(h)?(habitFreq(h).perWeek||elig.length||1):elig.length; return {name:h.name, pct: den?Math.round(c/den*100):0}; });
+  const wr=DB.weeks[weekKey]||{};
+  let html="";
+  html+='<div class="pr-head"><h1>Weekoverzicht — Discipline Tracker</h1><div class="pr-period">'+esc(period)+'</div></div>';
+  html+='<div class="pr-body">';
+  html+='<div class="pr-kpis">';
+  html+='<div class="pr-kpi"><div class="n">'+compl+'%</div><div class="l">Completion</div></div>';
+  html+='<div class="pr-kpi"><div class="n">'+currentStreak()+'</div><div class="l">Streak (dagen)</div></div>';
+  html+='<div class="pr-kpi"><div class="n">'+logged.length+'/7</div><div class="l">Dagen gelogd</div></div>';
+  html+='<div class="pr-kpi"><div class="n">'+eAvg+'</div><div class="l">Gem. energie</div></div>';
+  html+='<div class="pr-kpi"><div class="n">'+(deep/60).toFixed(1)+'</div><div class="l">Diep werk (u)</div></div>';
+  html+='<div class="pr-kpi"><div class="n">'+slAvg+'</div><div class="l">Gem. slaap (u)</div></div>';
+  html+='</div>';
+  html+='<div class="pr-h2">Per gewoonte</div>';
+  perHabit.forEach(function(p){ html+='<div class="pr-bar"><div class="bl"><span>'+esc(p.name)+'</span><span>'+p.pct+'%</span></div><div class="pr-track"><div class="pr-fill" style="width:'+p.pct+'%"></div></div></div>'; });
+  html+='<div class="pr-h2">Key take-aways</div><div class="pr-list">';
+  if(perHabit.length){ const sorted=perHabit.slice().sort(function(a,b){return b.pct-a.pct;}); const best=sorted[0],weak=sorted[sorted.length-1];
+    html+='<div>• Sterkste gewoonte: '+esc(best.name)+' ('+best.pct+'%)</div>';
+    if(weak.name!==best.name) html+='<div>• Grootste aandachtspunt: '+esc(weak.name)+' ('+weak.pct+'%)</div>';
+    html+='<div>• '+(compl>=80?'Sterke week — consistentie boven 80%.':compl>=50?'Redelijke week — ruimte om consistenter te worden.':'Pittige week — focus op klein en consistent.')+'</div>';
+  }
+  if(eAvg!=="—") html+='<div>• Gemiddelde energie '+eAvg+'/5'+(parseFloat(eAvg)<3?' — let op rust en herstel.':'.')+'</div>';
+  html+='</div>';
+  html+='<div class="pr-h2">Focuspunten volgende week</div><div class="pr-list">';
+  if(perHabit.length){ const weak=perHabit.slice().sort(function(a,b){return a.pct-b.pct;})[0]; html+='<div>• Verhoog consistentie op: '+esc(weak.name)+'</div>'; }
+  if(wr.adj) html+='<div>• Geplande aanpassing: '+esc(wr.adj)+'</div>';
+  html+='<div>• Mis nooit twee keer achter elkaar. 1% beter per dag telt op.</div></div>';
+  if(wr.wins||wr.obst){ html+='<div class="pr-h2">Weekreview</div><div class="pr-list">'; if(wr.wins) html+='<div>✅ '+esc(wr.wins)+'</div>'; if(wr.obst) html+='<div>⚠️ '+esc(wr.obst)+'</div>'; html+='</div>'; }
+  const refl=[]; logged.forEach(function(k){ const l=DB.logs[k]; const d=fromIso(k); const parts=[]; if(l.good)parts.push("goed: "+l.good); if(l.better)parts.push("beter: "+l.better); if(l.tomorrow)parts.push("morgen: "+l.tomorrow); if(l.note)parts.push("dagboek: "+l.note); if(parts.length) refl.push(DAYS[d.getDay()]+" "+d.getDate()+"/"+(d.getMonth()+1)+" — "+parts.join(" | ")); });
+  if(refl.length){ html+='<div class="pr-h2">Reflecties</div><div class="pr-list">'; refl.forEach(function(r){ html+='<div>'+esc(r)+'</div>'; }); html+='</div>'; }
+  html+='<div class="pr-foot">Gegenereerd uit je Discipline Tracker • '+iso(new Date())+'</div>';
+  html+='</div>';
+  document.getElementById("printReport").innerHTML=html;
+}
+function printWeekReport(){
+  const wk=curWeek||iso(mondayOf(new Date()));
+  buildWeekReportDOM(wk);
+  toast("Overzicht openen om op te slaan als PDF…");
+  setTimeout(function(){ window.print(); }, 120);
+}
+
+/* ---------- Rendering: Identiteit (met bewerken) ---------- */
+let editIdentity=false, editGoals=false, editingHabit=null;
+
+function field(labelText, value, big){
+  const wrap=document.createElement("div");
+  const lab=document.createElement("label"); lab.className="fl"; lab.textContent=labelText;
+  const inp=big? document.createElement("textarea") : document.createElement("input");
+  if(!big) inp.type="text";
+  inp.value=value||"";
+  wrap.appendChild(lab); wrap.appendChild(inp);
+  wrap._input=inp;
+  return wrap;
+}
+
+function renderIdentityCard(){
+  const c=document.getElementById("identityCard"); c.innerHTML="";
+  if(!editIdentity){
+    c.innerHTML=
+      '<div class="cardhead"><h2 style="margin:0">Wie ik word</h2><button class="iconbtn" onclick="startEditIdentity()">✎ Bewerken</button></div>'+
+      '<div class="qa"><div class="q">Wie wil ik worden?</div><div class="a">'+esc(DB.identity.become)+'</div></div>'+
+      '<div class="qa"><div class="q">Mijn kernwaarden</div><div class="a">'+esc(DB.identity.values)+'</div></div>'+
+      '<div class="qa"><div class="q">Wat zou die persoon NU doen?</div><div class="a">'+esc(DB.identity.now)+'</div></div>'+
+      '<div class="qa"><div class="q">Wat laat ik los?</div><div class="a">'+esc(DB.identity.letgo)+'</div></div>';
+  } else {
+    const f1=field("Wie wil ik worden?",DB.identity.become,true);
+    const f2=field("Mijn kernwaarden",DB.identity.values,true);
+    const f3=field("Wat zou die persoon NU doen?",DB.identity.now,true);
+    const f4=field("Wat laat ik los?",DB.identity.letgo,true);
+    [f1,f2,f3,f4].forEach(function(f){c.appendChild(f);});
+    const row=document.createElement("div"); row.className="btnrow";
+    const sv=document.createElement("button"); sv.className="btn-save"; sv.textContent="Opslaan";
+    sv.onclick=function(){ DB.identity.become=f1._input.value; DB.identity.values=f2._input.value;
+      DB.identity.now=f3._input.value; DB.identity.letgo=f4._input.value; save(); editIdentity=false; renderIdentityCard(); toast("Opgeslagen ✓"); };
+    const cn=document.createElement("button"); cn.className="btn-cancel"; cn.textContent="Annuleren";
+    cn.onclick=function(){ editIdentity=false; renderIdentityCard(); };
+    row.appendChild(sv); row.appendChild(cn); c.appendChild(row);
+  }
+}
+function startEditIdentity(){ editIdentity=true; renderIdentityCard(); }
+
+function renderGoalsCard(){
+  const c=document.getElementById("goalsCard"); c.innerHTML="";
+  if(!editGoals){
+    c.innerHTML='<div class="cardhead"><h2 style="margin:0">Jaardoelen</h2><button class="iconbtn" onclick="startEditGoals()">✎ Bewerken</button></div>';
+    DB.goals.forEach(function(g){ const el=document.createElement("div"); el.className="qa";
+      el.innerHTML='<div class="q">'+esc(g.l)+'</div><div class="a">'+esc(g.t)+'</div>'; c.appendChild(el); });
+  } else {
+    const rows=[];
+    DB.goals.forEach(function(g,idx){
+      const box=document.createElement("div"); box.style.cssText="border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:6px";
+      const fl=field("Categorie",g.l,false); const ft=field("Doel",g.t,true);
+      box.appendChild(fl); box.appendChild(ft);
+      const del=document.createElement("button"); del.className="iconbtn danger"; del.textContent="🗑 Verwijderen"; del.style.marginTop="8px";
+      (function(i){ del.onclick=function(){ DB.goals.splice(i,1); save(); renderGoalsCard(); }; })(idx);
+      box.appendChild(del); c.appendChild(box); rows.push({fl:fl,ft:ft,i:idx});
+    });
+    const add=document.createElement("button"); add.className="addbtn"; add.textContent="+ Doel toevoegen";
+    add.onclick=function(){ // save current edits first
+      rows.forEach(function(r){ DB.goals[r.i].l=r.fl._input.value; DB.goals[r.i].t=r.ft._input.value; });
+      DB.goals.push({l:"Nieuwe categorie",t:""}); save(); renderGoalsCard(); };
+    c.appendChild(add);
+    const row=document.createElement("div"); row.className="btnrow";
+    const sv=document.createElement("button"); sv.className="btn-save"; sv.textContent="Opslaan";
+    sv.onclick=function(){ rows.forEach(function(r){ DB.goals[r.i].l=r.fl._input.value; DB.goals[r.i].t=r.ft._input.value; }); save(); editGoals=false; renderGoalsCard(); toast("Opgeslagen ✓"); };
+    const cn=document.createElement("button"); cn.className="btn-cancel"; cn.textContent="Klaar";
+    cn.onclick=function(){ rows.forEach(function(r){ DB.goals[r.i].l=r.fl._input.value; DB.goals[r.i].t=r.ft._input.value; }); save(); editGoals=false; renderGoalsCard(); };
+    row.appendChild(sv); row.appendChild(cn); c.appendChild(row);
+  }
+}
+function startEditGoals(){ editGoals=true; renderGoalsCard(); }
+
+function buildFreqEditor(h){
+  const f=habitFreq(h);
+  const wrap=document.createElement("div");
+  const lab=document.createElement("label"); lab.className="fl"; lab.textContent="Ritme / frequentie";
+  const sel=document.createElement("select");
+  [["daily","Elke dag"],["weekly","X per week (flexibel)"],["days","Vaste weekdagen"]].forEach(function(o){ const op=document.createElement("option"); op.value=o[0]; op.textContent=o[1]; if(f.type===o[0]) op.selected=true; sel.appendChild(op); });
+  const sub=document.createElement("div"); sub.style.marginTop="8px";
+  const perWrap=document.createElement("div");
+  const perLab=document.createElement("label"); perLab.className="fl"; perLab.style.marginTop="0"; perLab.textContent="Aantal keer per week";
+  const per=document.createElement("input"); per.type="number"; per.min="1"; per.max="7"; per.inputMode="numeric"; per.value=(f.perWeek||3);
+  perWrap.appendChild(perLab); perWrap.appendChild(per);
+  const dayWrap=document.createElement("div");
+  const dayLab=document.createElement("label"); dayLab.className="fl"; dayLab.style.marginTop="0"; dayLab.textContent="Op welke dagen? (rest = vrije dag)";
+  const daysRow=document.createElement("div"); daysRow.className="energy"; daysRow.style.flexWrap="wrap";
+  const DOWS=[["1","ma"],["2","di"],["3","wo"],["4","do"],["5","vr"],["6","za"],["0","zo"]];
+  const selDays=new Set((f.days||[]).map(Number));
+  DOWS.forEach(function(o){ const b=document.createElement("button"); b.type="button"; b.textContent=o[1]; b.style.flex="1 0 18%"; const v=Number(o[0]); if(selDays.has(v)) b.className="on";
+    b.onclick=function(){ if(selDays.has(v)){selDays.delete(v); b.className="";} else {selDays.add(v); b.className="on";} };
+    daysRow.appendChild(b); });
+  dayWrap.appendChild(dayLab); dayWrap.appendChild(daysRow);
+  function refresh(){ const t=sel.value; perWrap.style.display=(t==="weekly")?"block":"none"; dayWrap.style.display=(t==="days")?"block":"none"; }
+  sel.onchange=refresh; sub.appendChild(perWrap); sub.appendChild(dayWrap);
+  wrap.appendChild(lab); wrap.appendChild(sel); wrap.appendChild(sub); refresh();
+  return { el:wrap, get:function(){
+    const t=sel.value;
+    if(t==="weekly") return {type:"weekly", perWeek: Math.min(7,Math.max(1, parseInt(per.value)||3))};
+    if(t==="days"){ const arr=Array.from(selDays).sort(function(a,b){return a-b;}); return {type:"days", days: arr.length?arr:[1,2,3,4,5]}; }
+    return {type:"daily"};
+  }};
+}
+function renderHabitDefs(){
+  const hd=document.getElementById("habitDefs"); hd.innerHTML="";
+  DB.habits.forEach(function(h,i){
+    const el=document.createElement("div"); el.className="hcard"; el.style.position="relative";
+    if(editingHabit===h.id){
+      const fn=field("Gewoonte",h.name,false);
+      const fi=field("Identiteit-stem (\"Ik ben iemand die…\")",h.identity,false);
+      const fc=field("1 · Zichtbaar (cue: wanneer + waar)",h.cue,false);
+      const fa=field("2 · Aantrekkelijk (koppel aan…)",h.attractive,false);
+      const fe=field("3 · Makkelijk (2-minuten versie)",h.easy,false);
+      const fs=field("4 · Bevredigend (directe beloning)",h.satisfying,false);
+      const ff=buildFreqEditor(h);
+      [fn,fi,fc,fa,fe,fs].forEach(function(f){el.appendChild(f);}); el.appendChild(ff.el);
+      const row=document.createElement("div"); row.className="btnrow";
+      const sv=document.createElement("button"); sv.className="btn-save"; sv.textContent="Opslaan";
+      sv.onclick=function(){ h.name=fn._input.value; h.identity=fi._input.value; h.cue=fc._input.value;
+        h.attractive=fa._input.value; h.easy=fe._input.value; h.satisfying=fs._input.value; h.freq=ff.get();
+        save(); editingHabit=null; renderHabitDefs(); renderToday(); toast("Opgeslagen ✓"); };
+      const cn=document.createElement("button"); cn.className="btn-cancel"; cn.textContent="Annuleren";
+      cn.onclick=function(){ editingHabit=null; renderHabitDefs(); };
+      row.appendChild(sv); row.appendChild(cn); el.appendChild(row);
+    } else {
+      const btns=document.createElement("div"); btns.className="hbtns";
+      const e=document.createElement("button"); e.className="iconbtn"; e.textContent="✎";
+      (function(id){ e.onclick=function(){ editingHabit=id; renderHabitDefs(); }; })(h.id);
+      const d=document.createElement("button"); d.className="iconbtn danger"; d.textContent="🗑";
+      (function(id,name){ d.onclick=function(){ if(confirm("Gewoonte verwijderen?\n\n"+name)){ DB.habits=DB.habits.filter(function(x){return x.id!==id;}); save(); renderHabitDefs(); renderToday(); } }; })(h.id,h.name);
+      btns.appendChild(e); btns.appendChild(d); el.appendChild(btns);
+      el.insertAdjacentHTML("beforeend",
+        '<div class="t">'+(i+1)+'. '+esc(h.name)+'</div>'+
+        '<div class="law"><b>⏱ Ritme</b><span>'+esc(freqLabel(h))+'</span></div>'+
+        '<div class="law"><b>“Ik ben…”</b><span>'+esc(h.identity)+'</span></div>'+
+        '<div class="law"><b>1·Zichtbaar</b><span>'+esc(h.cue)+'</span></div>'+
+        '<div class="law"><b>2·Aantrekkelijk</b><span>'+esc(h.attractive)+'</span></div>'+
+        '<div class="law"><b>3·Makkelijk</b><span>'+esc(h.easy)+'</span></div>'+
+        '<div class="law"><b>4·Bevredigend</b><span>'+esc(h.satisfying)+'</span></div>');
+    }
+    hd.appendChild(el);
+  });
+  if(DB.habits.length<7 && editingHabit===null){
+    const add=document.createElement("button"); add.className="addbtn"; add.textContent="+ Gewoonte toevoegen (max 7)";
+    add.onclick=function(){ const id="h"+Date.now();
+      DB.habits.push({id:id,name:"Nieuwe gewoonte",identity:"",cue:"",attractive:"",easy:"",satisfying:"",freq:{type:"daily"}});
+      save(); editingHabit=id; renderHabitDefs(); renderToday(); };
+    document.getElementById("habitDefs").appendChild(add);
+  }
+}
+
+function renderIdentityTab(){ renderIdentityCard(); renderGoalsCard(); renderAffirmEditor(); renderHabitDefs(); renderReminderUI(); }
+
+/* ---------- Reminder ---------- */
+function renderReminderUI(){
+  document.getElementById("remToggle").checked = !!DB.settings.reminderOn;
+  document.getElementById("remTime").value = DB.settings.reminderTime||"20:00";
+  let note="";
+  if(typeof Notification==="undefined"){ note="Dit toestel ondersteunt geen meldingen — je krijgt dan een banner bovenin de app."; }
+  else if(Notification.permission==="denied"){ note="Meldingen staan uit in je browserinstellingen. Je krijgt nog wel een banner bovenin de app."; }
+  else if(DB.settings.reminderOn){ note="Aan om "+DB.settings.reminderTime+". Werkt zolang de app open of op de achtergrond actief is. Zet de app op je beginscherm voor het beste resultaat."; }
+  else { note="Zet aan om dagelijks om de gekozen tijd een seintje te krijgen."; }
+  document.getElementById("remNote").textContent=note;
+  // wekelijks
+  document.getElementById("wkRemToggle").checked = !!DB.settings.weeklyOn;
+  document.getElementById("wkRemDay").value = String(DB.settings.weeklyDay!==undefined?DB.settings.weeklyDay:0);
+  document.getElementById("wkRemTime").value = DB.settings.weeklyTime||"18:00";
+  const DAYNL=["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
+  document.getElementById("wkRemNote").textContent = DB.settings.weeklyOn
+    ? ("Aan: elke "+DAYNL[Number(DB.settings.weeklyDay)]+" om "+DB.settings.weeklyTime+" krijg je een seintje om je weekoverzicht te mailen.")
+    : "Zet aan voor een wekelijks seintje om je weekoverzicht te mailen.";
+}
+document.getElementById("remToggle").addEventListener("change", function(e){
+  if(e.target.checked && typeof Notification!=="undefined" && Notification.permission==="default"){
+    Notification.requestPermission().then(function(){ renderReminderUI(); });
+  }
+  DB.settings.reminderOn=e.target.checked; save(); renderReminderUI();
+});
+document.getElementById("remTime").addEventListener("change", function(e){
+  DB.settings.reminderTime=e.target.value; save(); renderReminderUI();
+});
+document.getElementById("wkRemToggle").addEventListener("change", function(e){
+  if(e.target.checked && typeof Notification!=="undefined" && Notification.permission==="default"){
+    Notification.requestPermission().then(function(){ renderReminderUI(); });
+  }
+  DB.settings.weeklyOn=e.target.checked; save(); renderReminderUI();
+});
+document.getElementById("wkRemDay").addEventListener("change", function(e){ DB.settings.weeklyDay=Number(e.target.value); save(); renderReminderUI(); });
+document.getElementById("wkRemTime").addEventListener("change", function(e){ DB.settings.weeklyTime=e.target.value; save(); renderReminderUI(); });
+let rbMode="daily";
+function showBanner(mode){
+  rbMode = mode||"daily";
+  if(rbMode==="weekly"){
+    document.getElementById("rbIcon").textContent="📧";
+    document.getElementById("rbTitle").textContent="Tijd voor je weekoverzicht";
+    document.getElementById("rbSub").textContent="Mail je samenvatting van deze week.";
+    document.getElementById("rbAction").textContent="Naar weekoverzicht";
+  } else {
+    const n=activeHabits().length, done=dayDone(TODAY);
+    document.getElementById("rbIcon").textContent="🔔";
+    document.getElementById("rbTitle").textContent="Tijd voor je gewoonten";
+    document.getElementById("rbSub").textContent = done<n? ("Nog "+(n-done)+" van "+n+" te gaan vandaag.") : "Mooi — alles afgevinkt vandaag!";
+    document.getElementById("rbAction").textContent="Afvinken";
+  }
+  document.getElementById("reminderBanner").classList.add("show");
+}
+function dismissReminder(){ document.getElementById("reminderBanner").classList.remove("show"); }
+function openTodayFromReminder(){ dismissReminder(); switchTab("today"); }
+function openWeekFromReminder(){ dismissReminder(); switchTab("week"); }
+function rbActionClick(){ if(rbMode==="weekly") openWeekFromReminder(); else openTodayFromReminder(); }
+function fireReminder(){
+  if(typeof Notification!=="undefined" && Notification.permission==="granted"){
+    try{ new Notification("Discipline Tracker", {body:"Tijd om je gewoonten af te vinken 🔥", tag:"discipline-daily"}); }catch(e){}
+  }
+  showBanner();
+}
+function testReminder(){ fireReminder(); toast("Test verstuurd"); }
+function checkReminder(){
+  const s=DB.settings; if(!s.reminderOn || !s.reminderTime) return;
+  if(s.lastReminded===TODAY) return;
+  if(dayDone(TODAY)>=activeHabits().length && activeHabits().length>0) return; // al klaar vandaag
+  const now=new Date();
+  const cur=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  if(cur>=s.reminderTime){ s.lastReminded=TODAY; save(); fireReminder(); }
+}
+function fireWeekly(){
+  if(typeof Notification!=="undefined" && Notification.permission==="granted"){
+    try{ new Notification("Discipline Tracker", {body:"Tijd om je weekoverzicht te mailen 📧", tag:"discipline-weekly"}); }catch(e){}
+  }
+  showBanner("weekly");
+}
+function checkWeeklyReminder(){
+  const s=DB.settings; if(!s.weeklyOn || !s.weeklyTime) return;
+  const now=new Date();
+  if(now.getDay()!==Number(s.weeklyDay)) return;
+  const cur=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  if(cur<s.weeklyTime) return;
+  const wkKey=iso(mondayOf(now));
+  if(s.lastWeekly===wkKey) return;
+  s.lastWeekly=wkKey; save(); fireWeekly();
+}
+function checkAllReminders(){ checkReminder(); checkWeeklyReminder(); }
+
+/* ---------- Input wiring ---------- */
+function wireInputs(){
+  document.getElementById("deepWork").addEventListener("input",function(e){ dayLog(activeDate).deep=parseInt(e.target.value)||0; save(); });
+  for(let i=0;i<3;i++){ (function(idx){ document.getElementById("prio"+idx).addEventListener("input",function(e){ dayLog(activeDate).prio[idx]=e.target.value; save(); }); })(i); }
+  document.getElementById("good").addEventListener("input",function(e){ dayLog(activeDate).good=e.target.value; save(); });
+  document.getElementById("better").addEventListener("input",function(e){ dayLog(activeDate).better=e.target.value; save(); });
+  document.getElementById("tomorrow").addEventListener("input",function(e){ dayLog(activeDate).tomorrow=e.target.value; save(); });
+  var noteEl=document.getElementById("note"); if(noteEl) noteEl.addEventListener("input",function(e){ dayLog(activeDate).note=e.target.value; save(); });
+  var se=document.getElementById("sumEmail");
+  if(se) se.addEventListener("input",function(e){ DB.settings.email=e.target.value; save(); });
+  document.getElementById("sleepBed").addEventListener("change",function(e){ dayLog(activeDate).sleepBed=e.target.value; save(); renderSleep(); });
+  document.getElementById("sleepWake").addEventListener("change",function(e){ dayLog(activeDate).sleepWake=e.target.value; save(); renderSleep(); });
+  document.getElementById("sleepGoal").addEventListener("input",function(e){ DB.settings.sleepGoal=parseFloat(e.target.value)||7; save(); renderSleep(); });
+  const map={wkWins:"wins",wkObst:"obst",wkAdj:"adj"};
+  ["wkWins","wkObst","wkAdj"].forEach(function(id){
+    document.getElementById(id).addEventListener("input",function(e){
+      const w=DB.weeks[curWeek]||(DB.weeks[curWeek]={wins:"",obst:"",adj:""});
+      w[map[id]]=e.target.value; save();
+    });
+  });
+}
+
+/* ---------- Fundament: Discipline as Engineering™ ---------- */
+const FOUNDATION_LAYERS=[
+  {key:"missie", icon:"🎯", title:"1 · Missie — de richtingslaag",
+   why:"Zonder missie is discipline afhankelijk van motivatie, en dus instabiel. De missie is het ontwerpcriterium van je systeem.",
+   fields:[
+     {k:"why", label:"Waarom moet dit systeem bestaan?", ph:"De diepere reden achter de discipline…"},
+     {k:"beyond", label:"Wat is belangrijker dan tijdelijke emoties?", ph:"Wat blijft staan als de motivatie weg is…"},
+     {k:"identity", label:"Welke identiteit hoort bij je toekomstige zelf?", ph:"Wie word je?"},
+     {k:"oneliner", label:"→ Eén zin die je gedrag stuurt", ph:"Vat het samen in één sturende zin."}
+   ]},
+  {key:"constraints", icon:"🧱", title:"2 · Constraints — de realiteit",
+   why:"Een systeem dat geen rekening houdt met je echte leven, breekt direct. Deze antwoorden bepalen wanneer, waar en hoe het systeem stabiel kan draaien.",
+   fields:[
+     {k:"time", label:"Tijd — hoe ziet je week eruit, wanneer kun je écht?", ph:"Werk, kinderen, ritme — en de momenten die echt vrij zijn"},
+     {k:"energy", label:"Energie — wanneer het meest? wat zuigt weg? wat geeft terug?", ph:"…"},
+     {k:"env", label:"Omgeving & middelen — waar wel/niet, wat verstoort focus?", ph:"Plekken, stoorzenders en de middelen die je hebt"}
+   ]},
+  {key:"architectuur", icon:"⚙️", title:"3 · Architectuur — de gedragsinfrastructuur",
+   why:"Het hart van Discipline as Engineering™: hier ontwerp je hoe gedrag automatisch wordt, los van wilskracht.",
+   fields:[
+     {k:"triggers", label:"Triggers — wat start het gedrag? (tijd / context / emotie)", ph:"Bijv. 07:30 ochtendactivatie · laptop sluiten = beweging · stress = 2-min reset"},
+     {k:"interfaces", label:"Interfaces — hoe maak je de eerste stap <10 seconden?", ph:"Wat ligt klaar? Bijv. tas klaar om 09:00, schema en muziek vooraf ingesteld"},
+     {k:"friction", label:"Friction design — wat maak je makkelijker / moeilijker?", ph:"Laag: kleding op vaste plek. Hoog: geen social media voor 13:30"},
+     {k:"failsafe", label:"Fail-safes — wat doe je als motivatie wegvalt? (minimumprotocol)", ph:"Bijv. geen gym → thuis Level 1 · tijdgebrek → 8-min Tabata · emotie → box breathing + 20 squats"}
+   ]},
+  {key:"procedures", icon:"📋", title:"4 · Procedures — reproduceerbaar gedrag",
+   why:"Procedures zorgen voor consistent gedrag, zelfs op slechte dagen. Maak ze zó simpel dat ze altijd uitvoerbaar zijn.",
+   fields:[
+     {k:"morning", label:"Ochtendroutine", ph:"Bijv. 10 ademhalingen · 10 squats · intentie"},
+     {k:"pre", label:"Pre-training / pre-werk routine", ph:"De aanloop die je in de modus zet…"},
+     {k:"evening", label:"Avond / herstel", ph:"Bijv. mobiliteit · koude douche · dankbaarheid"},
+     {k:"minimum", label:"Minimumtraining / -protocol (altijd haalbaar)", ph:"De kleinste versie die nog telt — zodat je nooit een 0-dag hebt"}
+   ]},
+  {key:"monitoring", icon:"📊", title:"5 · Monitoring — meten is weten",
+   why:"Gevoel is onbetrouwbaar; data niet. Monitoring laat zien of het systeem werkt.",
+   fields:[
+     {k:"kpis", label:"Welke KPI's meet je? (eenvoudig, meetbaar, realistisch)", ph:"Bijv. sessies per week · energie voor/na · stressniveau · slaapkwaliteit"}
+   ],
+   note:"Je tracker meet al automatisch: completion, streaks, energie, diep werk en slaap — zie het Dashboard."},
+  {key:"iteratie", icon:"🔄", title:"6 · Iteratie — het levend systeem",
+   why:"Discipline moet meebewegen met het leven. Iteratie voorkomt systeemverval — verbeter elke week één element.",
+   fields:[
+     {k:"weekly", label:"Iteratie: waar brak het, welke constraint veranderde, wat moet simpeler of geautomatiseerd?", ph:"Eén verbetering per week is genoeg…"}
+   ],
+   note:"Doe dit wekelijks op het tabblad Week (wins · obstakels · aanpassing)."}
+];
+function foundationFilled(){
+  let c=0;
+  FOUNDATION_LAYERS.forEach(function(L){
+    const any=L.fields.some(function(f){ const v=DB.foundation[L.key+"."+f.k]; return v&&v.trim(); });
+    if(any) c++;
+  });
+  return c;
+}
+function updateFoundationProgress(){
+  const bar=document.getElementById("foundProgress"); if(!bar) return;
+  const f=foundationFilled();
+  bar.querySelector(".fill").style.width=(f/FOUNDATION_LAYERS.length*100)+"%";
+  bar.querySelector(".fp-count").textContent=f+"/"+FOUNDATION_LAYERS.length+" lagen";
+}
+function renderFoundation(){
+  const wrap=document.getElementById("foundationBody"); if(!wrap) return; wrap.innerHTML="";
+  FOUNDATION_LAYERS.forEach(function(L){
+    const card=document.createElement("div"); card.className="card";
+    card.innerHTML='<h2 style="margin:0 0 2px">'+L.icon+' '+esc(L.title)+'</h2><p class="sub">'+esc(L.why)+'</p>';
+    L.fields.forEach(function(f){
+      const key=L.key+"."+f.k;
+      const lab=document.createElement("label"); lab.className="fl"; lab.textContent=f.label;
+      const ta=document.createElement("textarea"); ta.placeholder=f.ph||""; ta.value=DB.foundation[key]||"";
+      ta.addEventListener("input",function(e){ DB.foundation[key]=e.target.value; save(); updateFoundationProgress(); });
+      card.appendChild(lab); card.appendChild(ta);
+    });
+    if(L.note){ const n=document.createElement("p"); n.className="sub"; n.style.margin="10px 0 0"; n.textContent="ℹ️ "+L.note; card.appendChild(n); }
+    if(L.key==="procedures") appendHabitDerivation(card);
+    if(L.key==="monitoring") appendMonitoringReadout(card);
+    wrap.appendChild(card);
+  });
+  updateFoundationProgress();
+}
+
+/* Fundament automatisch aanvullen uit reeds bekende app-data */
+function shortName(n){ return (n||"").split(":")[0].trim(); }
+function foundationAutofillMap(){
+  const out={}, id=DB.identity||{};
+  // 1 · Missie — uit Identiteit
+  if(id.become) out["missie.identity"]=id.become;
+  if(id.values) out["missie.beyond"]=id.values;
+  // 3 · Architectuur — uit je gewoonten (Vier Wetten)
+  const habits=(DB.habits||[]).filter(function(h){return h.name&&h.name.trim();});
+  const cues=habits.filter(function(h){return h.cue&&h.cue.trim();}).map(function(h){return shortName(h.name)+": "+h.cue.trim();});
+  if(cues.length) out["architectuur.triggers"]=cues.join("\n");
+  const easies=habits.filter(function(h){return h.easy&&h.easy.trim();}).map(function(h){return shortName(h.name)+": "+h.easy.trim();});
+  if(easies.length) out["architectuur.interfaces"]=easies.join("\n");
+  const attr=habits.filter(function(h){return h.attractive&&h.attractive.trim();}).map(function(h){return shortName(h.name)+": "+h.attractive.trim();});
+  if(attr.length) out["architectuur.friction"]="Laagfrictie (koppelingen):\n"+attr.join("\n");
+  // 4 · Procedures — gewoonten gegroepeerd op tijdstip
+  function pick(rx){ return habits.filter(function(h){ return rx.test(h.name||""); }).map(function(h){ return (h.easy&&h.easy.trim())?h.easy.trim():shortName(h.name); }); }
+  const morn=pick(/ochtend|opstaan|morning/i); if(morn.length) out["procedures.morning"]=morn.join("\n");
+  const eve=pick(/avond|evening/i); if(eve.length) out["procedures.evening"]=eve.join("\n");
+  // 5 · Monitoring — wat de tracker feitelijk al meet
+  out["monitoring.kpis"]="Gewoonten-completion · huidige streak · energie (1–5) · diep werk (min) · slaap & slaapkwaliteit";
+  // 6 · Iteratie — laatste ingevulde weekreview
+  const wk=DB.weeks||{}, keys=Object.keys(wk).sort();
+  for(let i=keys.length-1;i>=0;i--){ const w=wk[keys[i]]; if(w&&(w.adj||w.obst||w.wins)){ const p=[]; if(w.adj)p.push("Aanpassing: "+w.adj); if(w.obst)p.push("Obstakel: "+w.obst); if(w.wins)p.push("Win: "+w.wins); out["iteratie.weekly"]=p.join("\n"); break; } }
+  return out;
+}
+function autofillFoundation(force){
+  if(!DB.foundation) DB.foundation={};
+  const map=foundationAutofillMap(); let n=0;
+  Object.keys(map).forEach(function(k){
+    const cur=DB.foundation[k];
+    if(force || !cur || !String(cur).trim()){ if(DB.foundation[k]!==map[k]){ DB.foundation[k]=map[k]; n++; } }
+  });
+  if(n) save();
+  return n;
+}
+function repullFoundation(){
+  const n=autofillFoundation(false);
+  renderFoundation();
+  toast(n? (n+" veld"+(n===1?"":"en")+" aangevuld ✓") : "Alles was al ingevuld of handmatig aangepast");
+}
+
+/* Procedures → trackbare gewoonten afleiden */
+const PROC_MAP=[
+  {k:"morning", name:"Ochtendroutine"},
+  {k:"pre",     name:"Pre-routine (aanloop)"},
+  {k:"evening", name:"Avond & herstel"},
+  {k:"minimum", name:"Minimumprotocol"}
+];
+function foundationCue(){ return (DB.foundation["architectuur.triggers"]||"").trim(); }
+function foundationIdentity(){ return (DB.foundation["missie.oneliner"]||DB.foundation["missie.identity"]||(DB.identity&&DB.identity.become)||"").trim(); }
+function habitFromFoundationExists(key){ return DB.habits.some(function(h){ return h.foundationKey===key; }); }
+function habitLinkedTo(key){ return DB.habits.filter(function(h){ return h.foundationKey===key; })[0]; }
+function removeFoundationHabit(key, name){
+  if(!confirm("Verwijderen uit tracker?\n\n"+name+"\n\nDe gewoonte verdwijnt uit je afvinklijst. Je procedure-tekst in het fundament blijft staan.")) return;
+  const before=DB.habits.length;
+  DB.habits=DB.habits.filter(function(h){ return h.foundationKey!==key; });
+  save();
+  toast((before-DB.habits.length)+" gewoonte verwijderd");
+  renderFoundation();
+  renderToday();
+}
+function unlinkFoundationHabit(key, name){
+  let n=0; DB.habits.forEach(function(h){ if(h.foundationKey===key){ delete h.foundationKey; delete h.foundationOrigin; n++; } });
+  if(n){ save(); toast("Ontkoppeld — gewoonte blijft staan"); renderFoundation(); renderToday(); }
+}
+function linkExistingHabit(habitId, key){
+  const h=DB.habits.filter(function(x){ return x.id===habitId; })[0]; if(!h) return;
+  h.foundationKey=key; delete h.foundationOrigin; save(); toast("Gekoppeld ✓"); renderFoundation(); renderToday();
+}
+function createHabitFromProcedure(c){
+  if(DB.habits.length>=7){ toast("Max 7 gewoonten — ontkoppel of verwijder er eerst één"); return; }
+  DB.habits.push({ id:"h"+Date.now()+Math.floor(Math.random()*1000),
+    name:c.name, identity:foundationIdentity(), cue:foundationCue(), attractive:"",
+    easy:c.text, satisfying:"Afvinken in tracker + zien dat het systeem blijft staan",
+    foundationKey:c.k, foundationOrigin:true, freq:{type:"daily"} });
+  save(); toast("Nieuwe gewoonte toegevoegd ✓"); renderFoundation(); renderToday();
+}
+function appendHabitDerivation(card){
+  const wrap=document.createElement("div"); wrap.style.cssText="margin-top:14px;border-top:1px solid var(--line);padding-top:12px";
+  wrap.innerHTML='<div class="section-label" style="margin:0 0 6px">Koppelen met tracker</div><p class="sub">Verbind elke procedure met een gewoonte in je afvinklijst, of maak er een nieuwe van. Koppelen legt alleen een verband — het verandert je bestaande gewoonte niet.</p>';
+  const cands=PROC_MAP.map(function(p){ return {k:"procedures."+p.k, name:p.name, text:(DB.foundation["procedures."+p.k]||"").trim()}; }).filter(function(c){ return c.text; });
+  if(!cands.length){
+    const e=document.createElement("p"); e.className="sub"; e.textContent="Vul eerst je procedures hierboven in — dan kun je ze koppelen aan je gewoonten."; wrap.appendChild(e); card.appendChild(wrap); return;
+  }
+  cands.forEach(function(c){
+    const linked=habitLinkedTo(c.k);
+    const row=document.createElement("div"); row.style.cssText="padding:10px 0;border-bottom:1px solid var(--line)";
+    if(linked){
+      row.innerHTML='<div style="font-size:14px;font-weight:600;color:var(--ink)">'+esc(c.name)+'</div>'+
+        '<div class="sub" style="margin:2px 0 8px"><span style="color:var(--good);font-weight:700">✓ gekoppeld aan:</span> '+esc(linked.name)+'</div>';
+      const br=document.createElement("div"); br.style.cssText="display:flex;gap:8px;flex-wrap:wrap";
+      const un=document.createElement("button"); un.className="iconbtn"; un.textContent="🔗✕ Ontkoppelen";
+      (function(key,name){ un.onclick=function(){ unlinkFoundationHabit(key,name); }; })(c.k,linked.name);
+      br.appendChild(un);
+      if(linked.foundationOrigin){
+        const del=document.createElement("button"); del.className="iconbtn danger"; del.textContent="🗑 Verwijderen uit tracker";
+        (function(key,name){ del.onclick=function(){ removeFoundationHabit(key,name); }; })(c.k,linked.name);
+        br.appendChild(del);
+      }
+      row.appendChild(br);
+    } else {
+      row.innerHTML='<div style="font-size:14px;font-weight:600;color:var(--ink)">'+esc(c.name)+'</div><div class="sub" style="margin:2px 0 8px">'+esc(c.text)+'</div>';
+      const sel=document.createElement("select");
+      const o0=document.createElement("option"); o0.value=""; o0.textContent="Koppel aan gewoonte…"; o0.disabled=true; o0.selected=true; sel.appendChild(o0);
+      DB.habits.filter(function(h){ return !h.foundationKey && h.name && h.name.trim(); }).forEach(function(h){ const op=document.createElement("option"); op.value="ex:"+h.id; op.textContent="Bestaand: "+shortName(h.name); sel.appendChild(op); });
+      const on=document.createElement("option"); on.value="new"; if(DB.habits.length>=7){ on.disabled=true; on.textContent="➕ Nieuwe maken (max 7 bereikt)"; } else { on.textContent="➕ Nieuwe gewoonte maken"; } sel.appendChild(on);
+      sel.onchange=function(){ const v=sel.value; if(v==="new"){ createHabitFromProcedure(c); } else if(v.indexOf("ex:")===0){ linkExistingHabit(v.slice(3), c.k); } };
+      row.appendChild(sel);
+    }
+    wrap.appendChild(row);
+  });
+  card.appendChild(wrap);
+}
+
+/* Monitoring: live KPI's automatisch uit de tracker-data */
+function appendMonitoringReadout(card){
+  const wrap=document.createElement("div"); wrap.style.cssText="margin-top:14px;border-top:1px solid var(--line);padding-top:12px";
+  wrap.innerHTML='<div class="section-label" style="margin:0 0 8px">Automatisch gemeten — live uit je tracker (deze week)</div>';
+  const mon=mondayOf(new Date()); const monKey=iso(mon);
+  let sessions=0,eSum=0,eN=0,slH=0,slN=0,slGoal=0; const goal=Number(DB.settings.sleepGoal||7);
+  for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); const k=iso(d); const l=DB.logs[k]; if(!l) continue;
+    if(dayDone(k)>0) sessions++;
+    if(l.energy>0){ eSum+=l.energy; eN++; }
+    const hh=sleepHours(l.sleepBed,l.sleepWake); if(hh!==null){ slH+=hh; slN++; if(hh>=goal) slGoal++; }
+  }
+  const tiles=[
+    {n:sessions+"/7", l:"Sessies deze week"},
+    {n:weekCompl(monKey)+"%", l:"Completion deze week"},
+    {n:currentStreak(), l:"🔥 Huidige streak"},
+    {n:eN?(eSum/eN).toFixed(1):"—", l:"Gem. energie (1–5)"},
+    {n:slN?((slH/slN).toFixed(1)+" u"):"—", l:"😴 Gem. slaap"},
+    {n:slN?(slGoal+"/"+slN):"—", l:"Nachten ≥ "+goal+" u"}
+  ];
+  const grid=document.createElement("div"); grid.className="stats";
+  tiles.forEach(function(t){ const s=document.createElement("div"); s.className="stat"; s.innerHTML='<div class="n" style="font-size:20px">'+t.n+'</div><div class="l">'+esc(t.l)+'</div>'; grid.appendChild(s); });
+  wrap.appendChild(grid);
+  const hint=document.createElement("p"); hint.className="sub"; hint.style.margin="10px 0 0"; hint.textContent="Deze KPI's vullen zich vanzelf op naarmate je dagelijks logt. Het volledige overzicht en de historie staan op het Dashboard.";
+  wrap.appendChild(hint);
+  card.appendChild(wrap);
+}
+
+/* ---------- Tabs ---------- */
+const TITLES={today:"Vandaag",dash:"Dashboard",week:"Weekreview",foundation:"Het fundament",id:"Identiteit & gewoonten"};
+function switchTab(name){
+  document.querySelectorAll(".tab").forEach(function(s){s.classList.remove("active");});
+  document.getElementById("tab-"+name).classList.add("active");
+  document.querySelectorAll("nav.bottom button").forEach(function(b){b.classList.toggle("on", b.dataset.tab===name);});
+  document.getElementById("tabTitle").textContent=TITLES[name];
+  if(name==="today") renderToday();
+  if(name==="dash") renderDash();
+  if(name==="week") renderWeek();
+  if(name==="foundation") renderFoundation();
+  if(name==="id") renderIdentityTab();
+  window.scrollTo(0,0);
+}
+(function(){
+  var nav=document.querySelector("nav.bottom");
+  var lastTouch=0;
+  function handle(e){
+    var btn=e.target.closest ? e.target.closest("button[data-tab]") : null;
+    if(!btn && e.target.parentNode) btn=e.target.parentNode.closest?e.target.parentNode.closest("button[data-tab]"):null;
+    if(!btn) return;
+    if(e.type==="touchend"){ lastTouch=Date.now(); e.preventDefault(); }
+    else if(e.type==="click" && Date.now()-lastTouch<600){ return; } // negeer dubbele click na touch
+    switchTab(btn.getAttribute("data-tab"));
+  }
+  nav.addEventListener("touchend", handle, {passive:false});
+  nav.addEventListener("click", handle);
+})();
+
+/* ---------- Export / Import ---------- */
+function daysBetween(a,b){ return Math.round((fromIso(b)-fromIso(a))/86400000); }
+function renderBackupNote(){
+  const el=document.getElementById("backupNote"); if(!el) return;
+  const lb=DB.settings && DB.settings.lastBackup;
+  if(!lb){ el.innerHTML="⚠️ Nog geen back-up gemaakt. Tip: exporteer en bewaar het bestand in OneDrive."; el.style.color="var(--accent2)"; return; }
+  const d=daysBetween(lb, TODAY);
+  if(d>=7){ el.innerHTML="⚠️ Laatste back-up was "+d+" dagen geleden ("+lb+"). Maak even een nieuwe."; el.style.color="var(--accent2)"; }
+  else { el.textContent="Laatste back-up: "+lb+(d===0?" (vandaag)":d===1?" (gisteren)":" ("+d+" dagen geleden)"); el.style.color="var(--muted)"; }
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="discipline-tracker-backup-"+TODAY+".json"; a.click();
+  DB.settings.lastBackup=TODAY; save(); renderBackupNote(); toast("Back-up gedownload ✓");
+}
+function importData(ev){
+  const f=ev.target.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=function(){ try{ DB=JSON.parse(r.result); applyDefaults(); persistNow();
+    renderToday(); renderBackupNote(); toast("Geïmporteerd ✓"); }catch(e){ toast("Ongeldig bestand"); } };
+  r.readAsText(f);
+}
+function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(function(){t.classList.remove("show");},1400); }
+
+/* ---------- util ---------- */
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+/* ---------- Service worker ---------- */
+function registerSW(){
+  if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){
+    navigator.serviceWorker.register("sw.js").catch(function(){ /* stil; werkt alsnog online */ });
+  }
+}
+
+/* ---------- init ---------- */
+load().then(function(){
+  renderHello(); renderToday(); wireInputs(); renderBackupNote();
+  checkAllReminders();
+  setInterval(checkAllReminders, 30000);
+  registerSW();
+}).catch(function(){
+  // Uiterste terugval: seed tonen zodat de app nooit leeg blijft hangen.
+  DB = JSON.parse(JSON.stringify(SEED)); applyDefaults();
+  renderHello(); renderToday(); wireInputs(); renderBackupNote();
+});
+// Laatste (gedebouncede) wijziging altijd vastleggen bij verlaten/achtergrond.
+function flush(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){} if(_idbReady) idbSet(KEY, DB).catch(function(){}); }
+window.addEventListener("pagehide", flush);
+document.addEventListener("visibilitychange", function(){ if(document.hidden) flush(); else checkAllReminders(); });
+</script>
+</body>
+</html>
