@@ -105,6 +105,9 @@
   .ract .rn{font-size:14.5px;font-weight:600}
   .rvotes{font-size:13px;color:var(--soft);margin-top:12px}
   .rvotes b{color:var(--accent2)}
+  .r-intent{font-size:13.5px;color:var(--accent2);margin-top:8px;line-height:1.4}
+  .r-chip{display:block;width:100%;text-align:left;background:var(--bg2);border:1px solid var(--line);color:var(--ink);border-radius:11px;padding:10px 12px;font-size:13.5px;cursor:pointer}
+  .r-chip:active{transform:scale(.99)}
   .contract-sig{font-size:12px;color:var(--muted);margin-top:6px;font-style:italic}
   .miss{background:linear-gradient(90deg,rgba(240,185,120,.16),var(--card2));border:1px solid var(--accent);border-radius:14px;padding:13px 14px;margin:0 0 12px;display:flex;gap:11px;align-items:flex-start;box-shadow:var(--shadow)}
   .miss .mi{font-size:21px;line-height:1;flex:0 0 auto}
@@ -247,61 +250,12 @@
 
 <!-- ============ VANDAAG ============ -->
 <!-- ============ RUIMTE: RITUEEL ============ -->
+<!-- ===== RUIMTE: RITUEEL ===== -->
 <div class="space active" data-space="ritual">
   <div id="ritualHero"></div>
 
-  <div class="card" id="affirmCard">
-    <div class="cardhead"><h2 style="margin:0">Affirmatie van vandaag</h2>
-      <div style="display:flex;gap:6px"><button class="iconbtn" onclick="regenAffirm()">↻ Nieuwe</button><button class="iconbtn" onclick="speakAffirmation()">🔊</button></div></div>
-    <p class="affirm-text" id="affirmText"></p>
-    <div class="affirm-nav">
-      <button onclick="cycleAffirmation(-1)">‹ Vorige</button>
-      <button onclick="cycleAffirmation(1)">Volgende ›</button>
-    </div>
-    <p class="sub" id="affirmStatus" style="margin:10px 0 0">Gericht op je identiteit, gewoonten en jaardoelen. Bewerk ze of zet AI aan onder Instrumenten.</p>
-  </div>
-
   <div id="missTwice"></div>
-</div>
 
-<!-- ============ RUIMTE: SPIEGEL ============ -->
-<div class="space" data-space="spiegel">
-  <div class="section-label">De Spiegel ✨</div>
-  <div class="card" id="mirrorCard"></div>
-</div>
-
-<!-- ============ RUIMTE: ONTWERP ============ -->
-<div class="space" data-space="ontwerp">
-  <div class="section-label">Identiteit</div>
-  <div class="card" id="identityCard"></div>
-
-  <div class="section-label">Jaardoelen — de richting van je missie</div>
-  <div class="card" id="goalsCard"></div>
-
-  <div class="card">
-    <h2>Het fundament</h2>
-    <p class="sub">Discipline as Engineering™ — een systeem sterker dan motivatie, emoties of omstandigheden. Zes lagen die je gedrag dragen, óók op slechte dagen. Vul ze in je eigen woorden in; alles bewaart zichzelf.</p>
-    <div class="bar" id="foundProgress" style="margin-top:8px">
-      <div class="bl"><span>Lagen ingevuld</span><span class="fp-count">0/6 lagen</span></div>
-      <div class="track"><div class="fill" style="width:0%"></div></div>
-    </div>
-    <p class="sub" style="margin:12px 0 0">🔗 Velden waarvan de gegevens al in de app bekend zijn (Identiteit, gewoonten, weekreviews, je data) zijn automatisch ingevuld. Pas ze gerust aan — alleen wat nog ontbreekt, vul je zelf in.</p>
-    <button class="iconbtn" style="margin-top:10px" onclick="repullFoundation()">🔗 Aanvullen uit app-data</button>
-  </div>
-  <div id="foundationBody"></div>
-  <div class="card" style="text-align:center">
-    <p style="font-size:14px;color:var(--accent2);font-weight:600;margin:4px 0;line-height:1.5">Discipline is geen gevoel dat je opwekt,<br>maar een systeem dat je bouwt.</p>
-  </div>
-
-  <div class="section-label">Mijn daden — ontworpen met de Vier Wetten</div>
-  <div id="habitDefs"></div>
-
-  <div class="section-label">Identiteitscontract</div>
-  <div class="card" id="contractCard"></div>
-</div>
-
-<!-- ============ RUIMTE: INSTRUMENTEN ============ -->
-<div class="space" data-space="instr">
   <div class="card" id="dateCard">
     <div class="cardhead"><h2 style="margin:0" id="dateCardTitle">Vandaag invullen</h2>
       <button class="iconbtn" id="todayBtn" onclick="goToday()" style="display:none">↩︎ Vandaag</button></div>
@@ -328,9 +282,20 @@
   </div>
 
   <div class="card">
-    <h2>Gewoonten afvinken</h2>
-    <p class="sub">Tik om af te vinken — 1 = gedaan. Mis nooit twee keer achter elkaar.</p>
+    <h2>Je daden vandaag</h2>
+    <p class="sub">Elke afgevinkte daad is een stem voor wie je kiest te zijn.</p>
     <div id="habitList"></div>
+  </div>
+
+  <div class="card" id="affirmCard">
+    <div class="cardhead"><h2 style="margin:0">Affirmatie van vandaag</h2>
+      <div style="display:flex;gap:6px"><button class="iconbtn" onclick="regenAffirm()">↻ Nieuwe</button><button class="iconbtn" onclick="speakAffirmation()">🔊</button></div></div>
+    <p class="affirm-text" id="affirmText"></p>
+    <div class="affirm-nav">
+      <button onclick="cycleAffirmation(-1)">‹ Vorige</button>
+      <button onclick="cycleAffirmation(1)">Volgende ›</button>
+    </div>
+    <p class="sub" id="affirmStatus" style="margin:10px 0 0">Gericht op je identiteit, gewoonten en jaardoelen. Bewerk ze of zet AI aan onder Instrumenten.</p>
   </div>
 
   <button id="moreToggle" class="addbtn" onclick="toggleMore()" style="margin:2px 0 4px">➕ Meer loggen (energie, slaap, prioriteiten, reflectie)</button>
@@ -383,7 +348,71 @@
     <textarea id="note" placeholder="Schrijf vrijuit…" style="min-height:90px"></textarea>
   </div>
   </div>
+</div>
 
+<!-- ===== RUIMTE: SPIEGEL ===== -->
+<div class="space" data-space="spiegel">
+  <div class="section-label">De Spiegel ✨</div>
+  <div class="card" id="mirrorCard"></div>
+
+  <div class="section-label">Wekelijkse review</div>
+  <div class="card">
+    <h2>Weekreview</h2>
+    <p class="sub">Elke zondag, 15 min. Wat werkte, wat niet, wat pas je aan?</p>
+    <div class="weekpick" id="weekPick"></div>
+    <div style="margin-top:6px;font-size:13px;color:var(--soft)">
+      Week van <b id="wkLabel"></b> — completion <b id="wkCompl" style="color:var(--accent2)">0%</b>
+    </div>
+    <label class="fl">✅ Wat werkte (wins)</label>
+    <textarea id="wkWins" placeholder="Waar ben je trots op?"></textarea>
+    <label class="fl">⚠️ Wat ging fout (obstakels)</label>
+    <textarea id="wkObst" placeholder="Wat hield je tegen?"></textarea>
+    <label class="fl">🔧 Aanpassing voor volgende week</label>
+    <textarea id="wkAdj" placeholder="Eén concrete aanpassing…"></textarea>
+  </div>
+
+  <div class="card">
+    <h2>Weekoverzicht</h2>
+    <p class="sub">Stelt een samenvatting, key take-aways en focuspunten op uit je data. Mail opent je mailapp met de tekst; PDF opent een visueel overzicht in app-kleuren dat je opslaat als PDF (Delen → Print → Opslaan als PDF).</p>
+    <label class="fl">Naar e-mailadres</label>
+    <input type="text" id="sumEmail" inputmode="email" placeholder="jouw@email.nl">
+    <button class="btn-mail" onclick="emailSummary()">📧 Mail het weekoverzicht</button>
+    <button class="btn-mail btn-alt" onclick="printWeekReport()">🖨️ Weekoverzicht als PDF</button>
+  </div>
+</div>
+
+<!-- ===== RUIMTE: ONTWERP ===== -->
+<div class="space" data-space="ontwerp">
+  <div class="section-label">Identiteit</div>
+  <div class="card" id="identityCard"></div>
+
+  <div class="section-label">Jaardoelen — de richting van je missie</div>
+  <div class="card" id="goalsCard"></div>
+
+  <div class="card">
+    <h2>Het fundament</h2>
+    <p class="sub">Discipline as Engineering™ — een systeem sterker dan motivatie, emoties of omstandigheden. Zes lagen die je gedrag dragen, óók op slechte dagen. Vul ze in je eigen woorden in; alles bewaart zichzelf.</p>
+    <div class="bar" id="foundProgress" style="margin-top:8px">
+      <div class="bl"><span>Lagen ingevuld</span><span class="fp-count">0/6 lagen</span></div>
+      <div class="track"><div class="fill" style="width:0%"></div></div>
+    </div>
+    <p class="sub" style="margin:12px 0 0">🔗 Velden waarvan de gegevens al in de app bekend zijn (Identiteit, gewoonten, weekreviews, je data) zijn automatisch ingevuld. Pas ze gerust aan — alleen wat nog ontbreekt, vul je zelf in.</p>
+    <button class="iconbtn" style="margin-top:10px" onclick="repullFoundation()">🔗 Aanvullen uit app-data</button>
+  </div>
+  <div id="foundationBody"></div>
+  <div class="card" style="text-align:center">
+    <p style="font-size:14px;color:var(--accent2);font-weight:600;margin:4px 0;line-height:1.5">Discipline is geen gevoel dat je opwekt,<br>maar een systeem dat je bouwt.</p>
+  </div>
+
+  <div class="section-label">Mijn daden — ontworpen met de Vier Wetten</div>
+  <div id="habitDefs"></div>
+
+  <div class="section-label">Identiteitscontract</div>
+  <div class="card" id="contractCard"></div>
+</div>
+
+<!-- ===== RUIMTE: INZICHT ===== -->
+<div class="space" data-space="inzicht">
   <div class="card" id="rankCard"></div>
 
   <div class="card">
@@ -425,31 +454,10 @@
     <div class="princ">Identiteit &gt; resultaat. Elke gewoonte is een stem voor wie je wordt.</div>
     <div class="princ">Omgeving &gt; motivatie. Maak het juiste makkelijk en het verkeerde moeilijk.</div>
   </div>
+</div>
 
-  <div class="card">
-    <h2>Weekreview</h2>
-    <p class="sub">Elke zondag, 15 min. Wat werkte, wat niet, wat pas je aan?</p>
-    <div class="weekpick" id="weekPick"></div>
-    <div style="margin-top:6px;font-size:13px;color:var(--soft)">
-      Week van <b id="wkLabel"></b> — completion <b id="wkCompl" style="color:var(--accent2)">0%</b>
-    </div>
-    <label class="fl">✅ Wat werkte (wins)</label>
-    <textarea id="wkWins" placeholder="Waar ben je trots op?"></textarea>
-    <label class="fl">⚠️ Wat ging fout (obstakels)</label>
-    <textarea id="wkObst" placeholder="Wat hield je tegen?"></textarea>
-    <label class="fl">🔧 Aanpassing voor volgende week</label>
-    <textarea id="wkAdj" placeholder="Eén concrete aanpassing…"></textarea>
-  </div>
-
-  <div class="card">
-    <h2>Weekoverzicht</h2>
-    <p class="sub">Stelt een samenvatting, key take-aways en focuspunten op uit je data. Mail opent je mailapp met de tekst; PDF opent een visueel overzicht in app-kleuren dat je opslaat als PDF (Delen → Print → Opslaan als PDF).</p>
-    <label class="fl">Naar e-mailadres</label>
-    <input type="text" id="sumEmail" inputmode="email" placeholder="jouw@email.nl">
-    <button class="btn-mail" onclick="emailSummary()">📧 Mail het weekoverzicht</button>
-    <button class="btn-mail btn-alt" onclick="printWeekReport()">🖨️ Weekoverzicht als PDF</button>
-  </div>
-
+<!-- ===== RUIMTE: INSTELLINGEN ===== -->
+<div class="space" data-space="instellingen">
   <div class="section-label">Herinnering</div>
   <div class="card" id="reminderCard">
     <h2>Dagelijkse herinnering</h2>
@@ -500,17 +508,20 @@
 
   <div class="section-label">AI-affirmaties ✨</div>
   <div class="card" id="aiCard"></div>
-</div>
 
+  <div class="section-label">Back-up & gegevens</div>
 <div class="foottools">
   <button onclick="openManifest()">📜 Manifest</button>
   <button onclick="exportData()">⬇︎ Back-up exporteren</button>
   <button onclick="document.getElementById('imp').click()">⬆︎ Importeren</button>
   <input type="file" id="imp" accept="application/json" style="display:none" onchange="importData(event)">
 </div>
+
 <div id="backupNote" style="text-align:center;color:var(--muted);font-size:11.5px;margin:0 16px 6px"></div>
+
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-bottom:10px">
   Gegevens worden lokaal op dit toestel bewaard · Discipline as Engineering
+</div>
 </div>
 
 </main>
@@ -533,7 +544,8 @@
   <button type="button" class="on" data-tab="ritual"><span class="ic">◎</span>Ritueel</button>
   <button type="button" data-tab="spiegel"><span class="ic">✨</span>Spiegel</button>
   <button type="button" data-tab="ontwerp"><span class="ic">🧭</span>Ontwerp</button>
-  <button type="button" data-tab="instr"><span class="ic">⚙</span>Instrumenten</button>
+  <button type="button" data-tab="inzicht"><span class="ic">📊</span>Inzicht</button>
+  <button type="button" data-tab="instellingen"><span class="ic">⚙</span>Instellingen</button>
 </nav>
 <div class="toast" id="toast">Opgeslagen ✓</div>
 
@@ -809,7 +821,12 @@ function renderToday(){
     el.className="habit"+(done?" done":"");
     el.setAttribute("role","button"); el.setAttribute("tabindex","0"); el.setAttribute("aria-pressed",done?"true":"false");
     el.innerHTML='<div class="check">✓</div><div style="flex:1"><div class="hname">'+esc(h.name)+'</div><div class="hid">'+esc(h.identity||freqLabel(h))+'</div></div>'+(trailing||"");
-    function toggle(){ l.habits=l.habits||{}; l.habits[h.id]=!l.habits[h.id]; save(); renderToday(); }
+    function toggle(){
+      l.habits=l.habits||{}; const wasOn=!!l.habits[h.id]; l.habits[h.id]=!wasOn; save();
+      const c=activeContract();
+      if(!wasOn && activeDate===TODAY && c && (c.habitIds||[]).indexOf(h.id)>=0){ toast("Stem #"+votesFor(c)+" · je wordt het"); }
+      renderToday();
+    }
     el.onclick=toggle;
     el.onkeydown=function(e){ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); } };
     return el;
@@ -828,6 +845,10 @@ function renderToday(){
       note.textContent=otherDays.length+" gewoonte"+(otherDays.length===1?"":"n")+" gepland op andere dagen.";
       list.appendChild(note);
     }
+  }
+  if(all.length<7){
+    const add=document.createElement("button"); add.className="addbtn"; add.style.marginTop="10px"; add.textContent="➕ Nieuwe daad toevoegen";
+    add.onclick=quickAddDaad; list.appendChild(add);
   }
   const er=document.getElementById("energyRow"); er.innerHTML="";
   for(let i=1;i<=5;i++){
@@ -1143,7 +1164,7 @@ function showDayDetail(key){
   card.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 function hideDayDetail(){ const c=document.getElementById("dayDetailCard"); if(c) c.style.display="none"; }
-function editDay(key){ activeDate=key; hideDayDetail(); switchTab("instr"); }
+function editDay(key){ activeDate=key; hideDayDetail(); switchTab("ritual"); }
 
 /* ---------- Rendering: Week ---------- */
 let curWeek;
@@ -1726,7 +1747,7 @@ function showBanner(mode){
 }
 function dismissReminder(){ document.getElementById("reminderBanner").classList.remove("show"); }
 function openTodayFromReminder(){ dismissReminder(); switchTab("ritual"); }
-function openWeekFromReminder(){ dismissReminder(); switchTab("instr"); }
+function openWeekFromReminder(){ dismissReminder(); switchTab("spiegel"); }
 function rbActionClick(){ if(rbMode==="weekly") openWeekFromReminder(); else openTodayFromReminder(); }
 function fireReminder(){
   if(typeof Notification!=="undefined" && Notification.permission==="granted"){
@@ -2029,6 +2050,36 @@ function castVote(habitId){
   if(!wasOn){ toast("Stem #"+votesFor(activeContract())+" · je wordt het"); }
   renderToday();
 }
+let intentState={loading:false, error:"", options:[]};
+function quickAddDaad(){
+  if(activeHabits().length>=7){ toast("Max 7 daden — verwijder er eerst één"); return; }
+  const id="h"+Date.now()+Math.floor(Math.random()*1000);
+  DB.habits.push({id:id,name:"Nieuwe daad",identity:"",cue:"",attractive:"",easy:"",satisfying:"",freq:{type:"daily"}});
+  const c=activeContract(); if(c){ c.habitIds=c.habitIds||[]; if(c.habitIds.indexOf(id)<0) c.habitIds.push(id); }
+  editingHabit=id; save();
+  switchTab("ontwerp");
+  setTimeout(function(){ renderHabitDefs(); const el=document.getElementById("habitDefs"); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); },90);
+}
+function latestWeekReview(){
+  const wk=DB.weeks||{}, keys=Object.keys(wk).sort();
+  for(let i=keys.length-1;i>=0;i--){ const w=wk[keys[i]]; if(w&&(w.wins||w.obst||w.adj)) return w; }
+  return null;
+}
+async function generateIntentions(c){
+  if(!aiEnabled()){ toast("Zet AI aan onder Instellingen ✨"); return; }
+  if(intentState.loading) return;
+  intentState.loading=true; intentState.error=""; intentState.options=[]; renderRitual();
+  try{
+    const w=latestWeekReview(); let ctx='Identiteit: "'+c.statement+'"';
+    if(w){ ctx+="\nLaatste weekreflectie — wins: "+(w.wins||"-")+"; obstakels: "+(w.obst||"-")+"; aanpassing: "+(w.adj||"-"); }
+    const prompt="Op basis van deze identiteit en laatste weekreflectie: geef 3 korte, concrete focus-intenties voor vandaag, elk beginnend met 'Vandaag kies ik om', maximaal 12 woorden, in het Nederlands. Antwoord UITSLUITEND met een JSON-array van 3 strings, zonder uitleg.\n\n"+ctx;
+    const txt=await aiComplete(prompt, 300);
+    const opts=parseAffirmList(txt);
+    intentState.loading=false;
+    if(!opts.length) throw new Error("Geen suggesties ontvangen");
+    intentState.options=opts.slice(0,3); renderRitual();
+  }catch(e){ intentState.loading=false; intentState.error=(e&&e.message)?String(e.message).slice(0,120):"Kon niet genereren"; renderRitual(); }
+}
 function renderRitual(){
   const box=document.getElementById("ritualHero"); if(!box) return; box.innerHTML="";
   const c=activeContract();
@@ -2039,32 +2090,36 @@ function renderRitual(){
     b.onclick=function(){ switchTab("ontwerp"); setTimeout(function(){ const el=document.getElementById("contractCard"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); },80); };
     card.appendChild(b); box.appendChild(card); return;
   }
-  if(activeDate!==TODAY) return;   // ritueel alleen voor vandaag
+  if(activeDate!==TODAY) return;   // hero alleen voor vandaag
+  const l=dayLog(TODAY);
   const card=document.createElement("div"); card.className="card ritual";
   card.innerHTML='<div class="rq">Wie kies je vandaag te zijn?</div><div class="rstate">'+esc(c.statement)+'</div>';
-  const acts=contractActs(c); const l=dayLog(TODAY);
-  if(!acts.length){
-    card.insertAdjacentHTML("beforeend",'<p class="sub">Koppel één of twee daden aan dit contract (Identiteit › Identiteitscontract). Elke voltooide daad wordt een stem.</p>');
-  } else {
-    acts.forEach(function(h){
-      const cast=!!(l.habits&&l.habits[h.id]);
-      const el=document.createElement("div"); el.className="ract"+(cast?" cast":"");
-      el.setAttribute("role","button"); el.setAttribute("tabindex","0");
-      el.innerHTML='<div class="rcheck">✓</div><div class="rn">'+esc(shortName(h.name))+'</div>';
-      function go(){ castVote(h.id); }
-      el.onclick=go; el.onkeydown=function(e){ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); go(); } };
-      card.appendChild(el);
-    });
+  if(l.intention){ card.insertAdjacentHTML("beforeend",'<div class="r-intent">↳ Vandaag kies ik: <b>'+esc(l.intention)+'</b></div>'); }
+  if(aiEnabled()){
+    const sg=document.createElement("button"); sg.className="iconbtn"; sg.style.marginTop="6px";
+    sg.textContent=intentState.loading?"✨ Suggesties laden…":"✨ Suggesties voor vandaag"; sg.disabled=!!intentState.loading;
+    sg.onclick=function(){ generateIntentions(c); }; card.appendChild(sg);
+    if(intentState.options && intentState.options.length){
+      const wrap=document.createElement("div"); wrap.style.cssText="display:flex;flex-direction:column;gap:6px;margin-top:8px";
+      intentState.options.forEach(function(opt){ const b=document.createElement("button"); b.className="r-chip"; b.textContent=opt;
+        b.onclick=function(){ dayLog(TODAY).intention=opt; save(); intentState.options=[]; renderRitual(); }; wrap.appendChild(b); });
+      card.appendChild(wrap);
+    }
+    if(intentState.error){ card.insertAdjacentHTML("beforeend",'<p class="sub" style="color:var(--bad);margin-top:6px">⚠️ '+esc(intentState.error)+'</p>'); }
   }
   const v=document.createElement("div"); v.className="rvotes";
-  v.innerHTML="<b>"+votesFor(c)+" stemmen</b> voor deze identiteit · vandaag "+votesToday(c)+"/"+acts.length+" bewijs";
+  v.innerHTML="<b>"+votesFor(c)+" stemmen</b> voor deze identiteit · vandaag "+votesToday(c)+" bewijs geleverd";
   card.appendChild(v);
   const ss=contractStrengthSentence(c);
   if(ss){ const sl=document.createElement("div"); sl.className="sub"; sl.style.margin="6px 0 0"; sl.textContent=ss; card.appendChild(sl); }
-  const lab=document.createElement("label"); lab.className="fl"; lab.textContent="Wat was vandaag je bewijs? (optioneel)";
-  const ti=document.createElement("input"); ti.type="text"; ti.placeholder="Eén zin…"; ti.value=l.evidence||"";
+  const need = votesToday(c)>0 && !(l.evidence&&l.evidence.trim());
+  const lab=document.createElement("label"); lab.className="fl"; lab.innerHTML='Wat was vandaag je bewijs? <span style="color:var(--accent)">· verplicht</span>';
+  const ti=document.createElement("input"); ti.type="text"; ti.placeholder="Eén zin — wat heb je vandaag bewezen?"; ti.value=l.evidence||"";
+  if(need) ti.style.borderColor="var(--accent)";
   ti.addEventListener("input",function(e){ dayLog(TODAY).evidence=e.target.value; save(); });
+  ti.addEventListener("blur",function(){ renderRitual(); });
   card.appendChild(lab); card.appendChild(ti);
+  if(need){ card.insertAdjacentHTML("beforeend",'<p class="sub" style="color:var(--accent);margin:6px 0 0">Je hebt vandaag bewijs geleverd — leg in één zin vast wát. Zonder bewijs is de dag nog niet af.</p>'); }
   box.appendChild(card);
 }
 function renderContractCard(){
@@ -2302,18 +2357,21 @@ function finishOnboarding(statement, actId, name){
 function skipOnboarding(){ if(!DB.settings) DB.settings={}; DB.settings.onboarded=true; save(); closeOnboard(); }
 
 /* ---------- Tabs ---------- */
-const TITLES={ritual:"Ritueel",spiegel:"De Spiegel",ontwerp:"Ontwerp",instr:"Instrumenten"};
+const TITLES={ritual:"Ritueel",spiegel:"De Spiegel",ontwerp:"Ontwerp",inzicht:"Inzicht",instellingen:"Instellingen"};
 function renderOntwerp(){ renderIdentityCard(); renderGoalsCard(); renderFoundation(); renderHabitDefs(); renderContractCard(); }
-function renderInstrumenten(){ renderDash(); renderWeek(); renderReminderUI(); renderAffirmEditor(); renderAiSettings(); }
+function renderInzicht(){ renderDash(); }
+function renderSpiegelTab(){ renderMirror(); renderWeek(); }
+function renderInstellingen(){ renderReminderUI(); renderAffirmEditor(); renderAiSettings(); renderBackupNote(); }
 function switchTab(name){
   document.querySelectorAll(".space").forEach(function(s){s.classList.remove("active");});
   const el=document.querySelector('.space[data-space="'+name+'"]'); if(el) el.classList.add("active");
   document.querySelectorAll("nav.bottom button").forEach(function(b){b.classList.toggle("on", b.dataset.tab===name);});
   document.getElementById("tabTitle").textContent=TITLES[name]||"";
   if(name==="ritual") renderToday();
-  if(name==="spiegel") renderMirror();
+  if(name==="spiegel") renderSpiegelTab();
   if(name==="ontwerp") renderOntwerp();
-  if(name==="instr") renderInstrumenten();
+  if(name==="inzicht") renderInzicht();
+  if(name==="instellingen") renderInstellingen();
   window.scrollTo(0,0);
 }
 (function(){
