@@ -369,6 +369,7 @@
     <textarea id="wkObst" placeholder="Wat hield je tegen?"></textarea>
     <label class="fl">🔧 Aanpassing voor volgende week</label>
     <textarea id="wkAdj" placeholder="Eén concrete aanpassing…"></textarea>
+    <div id="weekAiReflect" style="margin-top:14px"></div>
   </div>
 
   <div class="card">
@@ -1197,6 +1198,64 @@ function renderWeek(){
   document.getElementById("wkObst").value=w.obst||"";
   document.getElementById("wkAdj").value=w.adj||"";
   document.getElementById("sumEmail").value=DB.settings.email||"";
+  renderWeekReflection();
+}
+
+let weekReflectState={loading:false,error:""};
+function buildWeekDataContext(mk){
+  const mon=fromIso(mk); let energySum=0,energyN=0,sleepSum=0,sleepN=0,breakDays=0,restDays=0; const evid=[];
+  const acts=activeHabits(); const stat={}; acts.forEach(function(h){ stat[h.id]={name:shortName(h.name),sched:0,done:0}; });
+  for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); const k=iso(d); const l=DB.logs[k];
+    const p=dayPlanned(k), dn=dayDoneScheduled(k);
+    if(p===0) restDays++; else if(dn===0) breakDays++;
+    acts.forEach(function(h){ if(isScheduled(h,k)){ stat[h.id].sched++; if(l&&l.habits&&l.habits[h.id]) stat[h.id].done++; } });
+    if(l){ if(l.energy>0){energySum+=l.energy;energyN++;} const sh=sleepHours(l.sleepBed,l.sleepWake); if(sh!==null){sleepSum+=sh;sleepN++;} if(l.evidence) evid.push(l.evidence); }
+  }
+  const lines=[]; const c=activeContract();
+  if(c) lines.push('Identiteit: "'+c.statement+'"');
+  lines.push("Completion deze week: "+weekCompl(mk)+"%");
+  lines.push("Dagen: "+breakDays+" gebroken (gepland maar niets gedaan), "+restDays+" rustdagen.");
+  const perH=acts.map(function(h){ const s=stat[h.id]; return s.name+": "+s.done+"/"+s.sched; });
+  if(perH.length) lines.push("Per daad (gedaan/gepland): "+perH.join("; "));
+  if(energyN) lines.push("Gem. energie: "+(energySum/energyN).toFixed(1)+"/5");
+  if(sleepN) lines.push("Gem. slaap: "+(sleepSum/sleepN).toFixed(1)+" u");
+  if(c){ const end=iso(new Date(mon.getTime()+6*86400000)); const scs=(DB.self_concept||[]).filter(function(e){ return e.contractId===c.id && e.date>=mk && e.date<=end; }); if(scs.length) lines.push("Self-concept (1–10): "+scs.map(function(e){return e.rating;}).join(" → ")); }
+  if(evid.length) lines.push("Bewijs-notities: "+evid.slice(0,7).join(" | "));
+  const w=DB.weeks[mk]; if(w&&(w.wins||w.obst||w.adj)) lines.push("Eigen review — wins: "+(w.wins||"-")+"; obstakels: "+(w.obst||"-")+"; aanpassing: "+(w.adj||"-"));
+  return lines.join("\n");
+}
+async function generateWeekReflection(){
+  const mk=curWeek;
+  if(!aiEnabled()){ toast("Zet AI aan onder Instellingen ✨"); return; }
+  if(weekReflectState.loading) return;
+  weekReflectState.loading=true; weekReflectState.error=""; renderWeekReflection();
+  try{
+    const ctx=buildWeekDataContext(mk);
+    const prompt="Je bent een eerlijke spiegel, geen cheerleader. Lees deze week feitelijk. Geef precies twee dingen, in het Nederlands, tweede persoon ('je'): (1) één eerlijke observatie over wat het patroon laat zien — benoem ook de breuklijn, niet alleen het positieve; (2) één concrete, kleine aanpassing voor volgende week. Samen maximaal ongeveer 80 woorden. Geen opsomming van losse cijfers, geen clichés. Antwoord UITSLUITEND met geldige JSON: {\"observatie\":\"...\",\"aanpassing\":\"...\"}\n\nWEEKDATA:\n"+ctx;
+    const txt=await aiComplete(prompt,400);
+    let obj=null; const clean=txt.replace(/```json/gi,"").replace(/```/g,"").trim();
+    try{ obj=JSON.parse(clean); }catch(_){ const m=clean.match(/\{[\s\S]*\}/); if(m){ try{ obj=JSON.parse(m[0]); }catch(__){} } }
+    if(!obj || (!obj.observatie && !obj.aanpassing)) obj={observatie:clean.slice(0,400), aanpassing:""};
+    DB.weeks[mk]=DB.weeks[mk]||{wins:"",obst:"",adj:""};
+    DB.weeks[mk].aiReflection={observatie:obj.observatie||"", aanpassing:obj.aanpassing||"", at:new Date().toISOString()};
+    weekReflectState.loading=false; save(); renderWeekReflection(); toast("✨ Reflectie klaar");
+  }catch(e){ weekReflectState.loading=false; weekReflectState.error=(e&&e.message)?String(e.message).slice(0,120):"Kon niet genereren"; renderWeekReflection(); }
+}
+function renderWeekReflection(){
+  const box=document.getElementById("weekAiReflect"); if(!box) return; box.innerHTML="";
+  if(!aiEnabled()){ box.innerHTML='<p class="sub">✨ Zet AI aan onder Instellingen om een eerlijke reflectie op je week te krijgen — één observatie, één aanpassing, op basis van je eigen data.</p>'; return; }
+  const w=DB.weeks[curWeek]||{}; const r=w.aiReflection;
+  box.insertAdjacentHTML("beforeend",'<div class="section-label" style="margin:0 0 6px">AI-reflectie op deze week ✨</div>');
+  if(r && (r.observatie||r.aanpassing)){
+    if(r.observatie) box.insertAdjacentHTML("beforeend",'<div class="qa"><div class="q">Wat het patroon laat zien</div><div class="a">'+esc(r.observatie)+'</div></div>');
+    if(r.aanpassing) box.insertAdjacentHTML("beforeend",'<div class="qa"><div class="q">Eén aanpassing voor volgende week</div><div class="a">'+esc(r.aanpassing)+'</div></div>');
+  } else {
+    box.insertAdjacentHTML("beforeend",'<p class="sub">Laat de AI je week feitelijk lezen — wat stokte, waar je brak, hoe je self-concept bewoog — en je één eerlijke observatie + één aanpassing teruggeven.</p>');
+  }
+  const b=document.createElement("button"); b.className="iconbtn"; b.style.marginTop="6px"; b.disabled=!!weekReflectState.loading;
+  b.textContent=weekReflectState.loading?"✨ Leest je week…":(r?"↻ Opnieuw reflecteren":"✨ Reflecteer op deze week");
+  b.onclick=generateWeekReflection; box.appendChild(b);
+  if(weekReflectState.error) box.insertAdjacentHTML("beforeend",'<p class="sub" style="color:var(--bad);margin-top:6px">⚠️ '+esc(weekReflectState.error)+'</p>');
 }
 
 /* ---------- Weekoverzicht (samenvatting + mail) ---------- */
