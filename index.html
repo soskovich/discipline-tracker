@@ -254,15 +254,18 @@
 <div class="space active" data-space="ritual">
   <div id="ritualHero"></div>
 
-  <div id="missTwice"></div>
-
-  <div class="card" id="dateCard">
-    <div class="cardhead"><h2 style="margin:0" id="dateCardTitle">Vandaag invullen</h2>
-      <button class="iconbtn" id="todayBtn" onclick="goToday()" style="display:none">↩︎ Vandaag</button></div>
-    <p class="sub">Kies een dag om alsnog in te vullen of te corrigeren — je streak en cijfers herberekenen automatisch.</p>
-    <input type="date" id="datePick" onchange="pickDate(this.value)">
-    <p class="sub" id="dateNote" style="margin:10px 0 0"></p>
+  <div class="card" id="affirmCard">
+    <div class="cardhead"><h2 style="margin:0">Affirmatie van vandaag</h2>
+      <div style="display:flex;gap:6px"><button class="iconbtn" onclick="regenAffirm()">↻ Nieuwe</button><button class="iconbtn" onclick="speakAffirmation()">🔊</button></div></div>
+    <p class="affirm-text" id="affirmText"></p>
+    <div class="affirm-nav">
+      <button onclick="cycleAffirmation(-1)">‹ Vorige</button>
+      <button onclick="cycleAffirmation(1)">Volgende ›</button>
+    </div>
+    <p class="sub" id="affirmStatus" style="margin:10px 0 0">Gericht op je identiteit en je daden. Bewerk ze of zet AI aan onder Instellingen.</p>
   </div>
+
+  <div id="missTwice"></div>
 
   <div class="card">
     <div class="ringrow">
@@ -287,16 +290,6 @@
     <div id="habitList"></div>
   </div>
 
-  <div class="card" id="affirmCard">
-    <div class="cardhead"><h2 style="margin:0">Affirmatie van vandaag</h2>
-      <div style="display:flex;gap:6px"><button class="iconbtn" onclick="regenAffirm()">↻ Nieuwe</button><button class="iconbtn" onclick="speakAffirmation()">🔊</button></div></div>
-    <p class="affirm-text" id="affirmText"></p>
-    <div class="affirm-nav">
-      <button onclick="cycleAffirmation(-1)">‹ Vorige</button>
-      <button onclick="cycleAffirmation(1)">Volgende ›</button>
-    </div>
-    <p class="sub" id="affirmStatus" style="margin:10px 0 0">Gericht op je identiteit, gewoonten en jaardoelen. Bewerk ze of zet AI aan onder Instrumenten.</p>
-  </div>
 
   <button id="moreToggle" class="addbtn" onclick="toggleMore()" style="margin:2px 0 4px">➕ Meer loggen (energie, slaap, prioriteiten, reflectie)</button>
   <div id="moreLogging" style="display:none">
@@ -372,14 +365,6 @@
     <div id="weekAiReflect" style="margin-top:14px"></div>
   </div>
 
-  <div class="card">
-    <h2>Weekoverzicht</h2>
-    <p class="sub">Stelt een samenvatting, key take-aways en focuspunten op uit je data. Mail opent je mailapp met de tekst; PDF opent een visueel overzicht in app-kleuren dat je opslaat als PDF (Delen → Print → Opslaan als PDF).</p>
-    <label class="fl">Naar e-mailadres</label>
-    <input type="text" id="sumEmail" inputmode="email" placeholder="jouw@email.nl">
-    <button class="btn-mail" onclick="emailSummary()">📧 Mail het weekoverzicht</button>
-    <button class="btn-mail btn-alt" onclick="printWeekReport()">🖨️ Weekoverzicht als PDF</button>
-  </div>
 </div>
 
 <!-- ===== RUIMTE: ONTWERP ===== -->
@@ -459,6 +444,9 @@
 
 <!-- ===== RUIMTE: INSTELLINGEN ===== -->
 <div class="space" data-space="instellingen">
+  <div class="section-label">Feedback</div>
+  <div class="card" id="feedbackCard"></div>
+
   <div class="section-label">Herinnering</div>
   <div class="card" id="reminderCard">
     <h2>Dagelijkse herinnering</h2>
@@ -612,6 +600,7 @@ const SEED = {
   weeks:{},
   foundation:{},
   contracts:[],
+  contract_log:[],
   self_concept:[],
   settings:{reminderOn:false, reminderTime:"20:00", lastReminded:"", email:"vefinanceconsulting@gmail.com", weeklyOn:false, weeklyDay:0, weeklyTime:"18:00", lastWeekly:"", sleepGoal:7}
 };
@@ -668,6 +657,7 @@ function applyDefaults(){
   if(!DB.foundation) DB.foundation={};
   migrateFoundation();
   if(!DB.contracts) DB.contracts=[];
+  if(!DB.contract_log) DB.contract_log=[];
   if(!DB.self_concept) DB.self_concept=[];
   autofillFoundation(false);   // vul automatisch aan uit reeds bekende app-data (alleen lege velden)
   if(!DB.settings) DB.settings={reminderOn:false, reminderTime:"20:00", lastReminded:"", email:"vefinanceconsulting@gmail.com"};
@@ -701,6 +691,7 @@ function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0
 function fromIso(s){ const [y,m,dd]=s.split("-").map(Number); return new Date(y,m-1,dd); }
 const TODAY = iso(new Date());
 let activeDate = TODAY;             // de dag die je momenteel invult/bewerkt
+const AI_VOICE="Schrijf in het Nederlands, warm en menselijk — alsof een wijze, eerlijke vriend je rustig toespreekt. Direct en concreet, spreektaal mag. Geen coach-jargon, geen holle motivatie, geen clichés, geen uitroeptekens-spam. Liever één rake zin dan drie nette.";
 function isFuture(d){ return d>TODAY; }
 function pickDate(v){ if(!v) return; activeDate=v; renderToday(); }
 function goToday(){ activeDate=TODAY; renderToday(); }
@@ -804,6 +795,28 @@ function renderHello(){
   const d=new Date();
   document.getElementById("helloDate").textContent = DAYS[d.getDay()]+" "+d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear();
 }
+let _audioCtx=null;
+function feedbackTick(){
+  const s=DB.settings||{};
+  if(s.feedbackSound!==false){
+    try{
+      if(!_audioCtx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) _audioCtx=new AC(); }
+      if(_audioCtx){
+        if(_audioCtx.state==="suspended"){ _audioCtx.resume(); }
+        const t=_audioCtx.currentTime;
+        const o=_audioCtx.createOscillator(), g=_audioCtx.createGain();
+        o.type="sine";
+        o.frequency.setValueAtTime(523.25,t);                 // zachte opwaartse tik C5 → G5
+        o.frequency.exponentialRampToValueAtTime(783.99,t+0.11);
+        g.gain.setValueAtTime(0.0001,t);
+        g.gain.exponentialRampToValueAtTime(0.10,t+0.02);     // bewust zacht
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
+        o.connect(g); g.connect(_audioCtx.destination); o.start(t); o.stop(t+0.24);
+      }
+    }catch(e){}
+  }
+  if(s.feedbackHaptic!==false && navigator.vibrate){ try{ navigator.vibrate(18); }catch(e){} }
+}
 function renderToday(){
   renderDateBar();
   renderRitual();
@@ -824,6 +837,7 @@ function renderToday(){
     el.innerHTML='<div class="check">✓</div><div style="flex:1"><div class="hname">'+esc(h.name)+'</div><div class="hid">'+esc(h.identity||freqLabel(h))+'</div></div>'+(trailing||"");
     function toggle(){
       l.habits=l.habits||{}; const wasOn=!!l.habits[h.id]; l.habits[h.id]=!wasOn; save();
+      if(!wasOn) feedbackTick();
       const c=activeContract();
       if(!wasOn && activeDate===TODAY && c && (c.habitIds||[]).indexOf(h.id)>=0){ toast("Stem #"+votesFor(c)+" · je wordt het"); }
       renderToday();
@@ -1134,8 +1148,7 @@ function showDayDetail(key){
   const human=DAYS[d.getDay()]+" "+d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear();
   let html='<div class="cardhead"><h2 style="margin:0">'+esc(human)+'</h2><button class="iconbtn" onclick="hideDayDetail()">Sluiten</button></div>';
   if(!l || !isLogged(key)){
-    html+='<p class="sub" style="margin:8px 0 10px">Niets gelogd op deze dag.</p>';
-    html+='<button class="addbtn" onclick="editDay(\''+key+'\')">Deze dag invullen →</button>';
+    html+='<p class="sub" style="margin:8px 0 10px">Niets gelogd op deze dag. Een ongebruikte dag is verloren — dat hoort zo; het houdt je beeld eerlijk.</p>';
   } else {
     const nn=dayPlanned(key), doneN=dayDoneScheduled(key);
     if(nn===0){ html+='<p class="sub" style="margin:8px 0 6px">🌿 Rustdag — geen gewoonten gepland.</p>'; }
@@ -1159,7 +1172,6 @@ function showDayDetail(key){
     if(l.evidence) refl.push(["Bewijs",l.evidence]);
     if(l.note) refl.push(["Dagboek",l.note]);
     refl.forEach(function(p){ html+='<div class="qa"><div class="q">'+esc(p[0])+'</div><div class="a">'+esc(p[1])+'</div></div>'; });
-    html+='<button class="addbtn" onclick="editDay(\''+key+'\')" style="margin-top:10px">Bewerk deze dag →</button>';
   }
   card.innerHTML=html; card.style.display="block";
   card.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -1197,7 +1209,6 @@ function renderWeek(){
   document.getElementById("wkWins").value=w.wins||"";
   document.getElementById("wkObst").value=w.obst||"";
   document.getElementById("wkAdj").value=w.adj||"";
-  document.getElementById("sumEmail").value=DB.settings.email||"";
   renderWeekReflection();
 }
 
@@ -1231,7 +1242,7 @@ async function generateWeekReflection(){
   weekReflectState.loading=true; weekReflectState.error=""; renderWeekReflection();
   try{
     const ctx=buildWeekDataContext(mk);
-    const prompt="Je bent een eerlijke spiegel, geen cheerleader. Lees deze week feitelijk. Geef precies twee dingen, in het Nederlands, tweede persoon ('je'): (1) één eerlijke observatie over wat het patroon laat zien — benoem ook de breuklijn, niet alleen het positieve; (2) één concrete, kleine aanpassing voor volgende week. Samen maximaal ongeveer 80 woorden. Geen opsomming van losse cijfers, geen clichés. Antwoord UITSLUITEND met geldige JSON: {\"observatie\":\"...\",\"aanpassing\":\"...\"}\n\nWEEKDATA:\n"+ctx;
+    const prompt=AI_VOICE+"\n\nJe bent hier een eerlijke spiegel, geen cheerleader. Lees deze week feitelijk. Geef precies twee dingen, tweede persoon ('je'): (1) één eerlijke observatie over wat het patroon laat zien — benoem ook de breuklijn, niet alleen het positieve; (2) één concrete, kleine aanpassing voor volgende week. Samen maximaal ongeveer 80 woorden. Geen opsomming van losse cijfers. Antwoord UITSLUITEND met geldige JSON: {\"observatie\":\"...\",\"aanpassing\":\"...\"}\n\nWEEKDATA:\n"+ctx;
     const txt=await aiComplete(prompt,400);
     let obj=null; const clean=txt.replace(/```json/gi,"").replace(/```/g,"").trim();
     try{ obj=JSON.parse(clean); }catch(_){ const m=clean.match(/\{[\s\S]*\}/); if(m){ try{ obj=JSON.parse(m[0]); }catch(__){} } }
@@ -1368,10 +1379,10 @@ function renderAffirmations(){
     else if(aiState.error){ s.textContent="⚠️ "+aiState.error+" — je vaste set wordt getoond."; s.style.color="var(--bad)"; }
     else if(aiEnabled() && aiCacheToday()){ s.textContent="✨ AI-affirmaties van vandaag, op basis van je gewoonten & fundament."; s.style.color="var(--muted)"; }
     else if(aiEnabled()){ s.textContent="✨ AI staat aan — tik op ↻ Nieuwe voor een verse set."; s.style.color="var(--muted)"; }
-    else { s.textContent="Gericht op je identiteit, gewoonten en jaardoelen. Bewerk ze of zet AI aan onder Instrumenten."; s.style.color="var(--muted)"; }
+    else { s.textContent="Gericht op je identiteit en je daden. Bewerk ze of zet AI aan onder Instellingen."; s.style.color="var(--muted)"; }
   }
   if(aiState.loading && !arr.length){ t.textContent="✨ Even geduld…"; return; }
-  if(!arr.length){ t.textContent="Voeg affirmaties toe onder Instrumenten."; maybeAutoGenerate(); return; }
+  if(!arr.length){ t.textContent="Voeg affirmaties toe onder Instellingen."; maybeAutoGenerate(); return; }
   if(!affirmInit){ affirmIndex = dayOfYear(new Date()) % arr.length; affirmInit=true; }
   affirmIndex=((affirmIndex%arr.length)+arr.length)%arr.length;
   t.textContent=arr[affirmIndex];
@@ -1385,7 +1396,7 @@ function speakAffirmation(){
   arr.forEach(function(a){ const u=new SpeechSynthesisUtterance(a); u.lang="nl-NL"; u.rate=0.9; speechSynthesis.speak(u); });
   toast("Affirmaties worden voorgelezen");
 }
-function regenAffirm(){ if(!aiEnabled()){ toast("Zet AI-affirmaties eerst aan onder Instrumenten ✨"); return; } generateAffirmations(true); }
+function regenAffirm(){ if(!aiEnabled()){ toast("Zet AI-affirmaties eerst aan onder Instellingen ✨"); return; } generateAffirmations(true); }
 function maybeAutoGenerate(){
   if(!aiEnabled()) return;
   if(aiCacheToday()) return;
@@ -1406,8 +1417,8 @@ function buildAffirmContext(){
 }
 function buildAffirmPrompt(n){
   const ctx=buildAffirmContext();
-  return "Je bent een coach die korte, krachtige dagelijkse affirmaties schrijft in het Nederlands.\n"+
-    "Schrijf "+n+" affirmaties. Elke affirmatie: eerste persoon (begin met 'Ik'), tegenwoordige tijd, positief geformuleerd, maximaal ongeveer 18 woorden, concreet en geworteld in onderstaand profiel. Vermijd clich\u00e9s en herhaling; varieer de invalshoek (identiteit, gewoonten, rust, grenzen, groei).\n\n"+
+  return AI_VOICE+"\n\n"+
+    "Schrijf "+n+" affirmaties. Elke affirmatie: eerste persoon (begin met 'Ik'), tegenwoordige tijd, positief geformuleerd, maximaal ongeveer 18 woorden, concreet en geworteld in onderstaand profiel. Laat het klinken als iets wat je tegen jezelf zou zeggen, niet als een tegeltjeswijsheid. Varieer de invalshoek (identiteit, daden, rust, grenzen, groei).\n\n"+
     "PROFIEL:\n"+(ctx||"(geen extra context beschikbaar)")+"\n\n"+
     "Antwoord UITSLUITEND met een geldige JSON-array van strings, zonder uitleg en zonder markdown. Voorbeeld: [\"Ik ...\", \"Ik ...\"]";
 }
@@ -1420,7 +1431,7 @@ function parseAffirmList(text){
   return text.split("\n").map(function(s){return s.replace(/^[\-*\d.\s"]+/,"").replace(/["，,]+$/,"").trim();}).filter(function(s){return s.length>3;}).slice(0,12);
 }
 async function generateAffirmations(force){
-  if(!aiEnabled()){ toast("Zet AI-affirmaties eerst aan onder Instrumenten"); return; }
+  if(!aiEnabled()){ toast("Zet AI-affirmaties eerst aan onder Instellingen"); return; }
   if(aiState.loading) return;
   const c=aiCfg(); const sig=currentSig();
   aiState.loading=true; aiState.error=""; aiState.triedDate=TODAY; aiState.triedSig=sig; renderAffirmations(); renderAiSettings();
@@ -1685,7 +1696,35 @@ function renderHabitDefs(){
       const fe=field("3 · Makkelijk (2-minuten versie)",h.easy,false);
       const fs=field("4 · Bevredigend (directe beloning)",h.satisfying,false);
       const ff=buildFreqEditor(h);
-      [fn,fi,fc,fa,fe,fs].forEach(function(f){el.appendChild(f);}); el.appendChild(ff.el);
+      el.appendChild(fn); el.appendChild(fi);
+      el.insertAdjacentHTML("beforeend",'<p class="sub" style="margin:6px 0 2px">Ontwerp met de Vier Wetten. Deze velden voeden automatisch je <b>Systeem-laag</b> in het Fundament — zo hangt je daad aan je systeem, niet los ernaast.</p>');
+      el.appendChild(fc); el.appendChild(fa); el.appendChild(fe); el.appendChild(fs); el.appendChild(ff.el);
+      if(aiEnabled()){
+        const ai=document.createElement("button"); ai.className="iconbtn"; ai.style.cssText="margin:8px 0 2px";
+        ai.textContent="✨ Vier Wetten voorstellen (AI)";
+        ai.onclick=function(){
+          const nameVal=(fn._input.value||h.name||"").trim();
+          if(nameVal.length<2){ toast("Geef de daad eerst een naam"); return; }
+          const c=activeContract();
+          const ident=(fi._input.value||h.identity||(c&&c.statement)||"").trim();
+          const fnd=DB.foundation||{};
+          const sys=(fnd["systeem.routines"]?("\nBestaande routines: "+fnd["systeem.routines"]):"")+(fnd["systeem.triggers"]?("\nBestaande triggers: "+fnd["systeem.triggers"]):"");
+          ai.disabled=true; ai.textContent="✨ Denkt mee…";
+          const prompt=AI_VOICE+"\n\nIemand ontwerpt een nieuwe daad ('"+nameVal+"')"+(ident?(" die hoort bij de identiteit: \""+ident+"\""):"")+". Ontwerp deze daad volgens de Vier Wetten van gedragsverandering, kort en concreet:\n1 cue: wanneer en waar precies — koppel aan een bestaand moment.\n2 attractive: hoe maak je het aantrekkelijk — koppel aan iets fijns.\n3 easy: de 2-minuten-versie — zo klein dat je niet kunt weigeren.\n4 satisfying: een fail-safe (wat doe je als het dreigt mis te gaan) plus een directe beloning.\nElk veld maximaal 16 woorden, spreektaal."+sys+"\n\nAntwoord UITSLUITEND met geldige JSON: {\"cue\":\"...\",\"attractive\":\"...\",\"easy\":\"...\",\"satisfying\":\"...\"}";
+          aiComplete(prompt,400).then(function(txt){
+            let obj=null; const clean=txt.replace(/```json/gi,"").replace(/```/g,"").trim();
+            try{ obj=JSON.parse(clean); }catch(_){ const m=clean.match(/\{[\s\S]*\}/); if(m){ try{ obj=JSON.parse(m[0]); }catch(__){} } }
+            if(!obj) throw new Error("geen geldig voorstel");
+            if(obj.cue) fc._input.value=obj.cue;
+            if(obj.attractive) fa._input.value=obj.attractive;
+            if(obj.easy) fe._input.value=obj.easy;
+            if(obj.satisfying) fs._input.value=obj.satisfying;
+            toast("✨ Voorstel ingevuld — pas aan en sla op");
+          }).catch(function(e){ toast("AI: "+((e&&e.message)?String(e.message).slice(0,60):"mislukt")); })
+          .then(function(){ ai.disabled=false; ai.textContent="✨ Vier Wetten voorstellen (AI)"; });
+        };
+        el.appendChild(ai);
+      }
       const row=document.createElement("div"); row.className="btnrow";
       const sv=document.createElement("button"); sv.className="btn-save"; sv.textContent="Opslaan";
       sv.onclick=function(){ h.name=fn._input.value; h.identity=fi._input.value; h.cue=fc._input.value;
@@ -1920,10 +1959,10 @@ function renderFoundation(){
     wrap.appendChild(card);
   });
   const moc=document.createElement("div"); moc.className="card";
-  moc.innerHTML='<h2 style="margin:0 0 2px">📊 Monitoring — meten is weten</h2><p class="sub">Gevoel is onbetrouwbaar; data niet. Je systeem meet zichzelf al automatisch — completion, streaks, energie, diep werk en slaap — in je <b>Samenvatting</b> onder Instrumenten. Geen apart veld nodig.</p>';
+  moc.innerHTML='<h2 style="margin:0 0 2px">📊 Monitoring — meten is weten</h2><p class="sub">Gevoel is onbetrouwbaar; data niet. Je systeem meet zichzelf al automatisch — completion, streaks, energie, diep werk en slaap — in je <b>Samenvatting</b> onder Inzicht. Geen apart veld nodig.</p>';
   wrap.appendChild(moc);
   const itc=document.createElement("div"); itc.className="card";
-  itc.innerHTML='<h2 style="margin:0 0 2px">🔄 Iteratie — het levend systeem</h2><p class="sub">Discipline moet meebewegen met het leven. Je systeem itereert niet hier in een veld, maar in de praktijk: je <b>wekelijkse review</b> onder Instrumenten › Weekreview. Eén verbetering per week is genoeg.</p>';
+  itc.innerHTML='<h2 style="margin:0 0 2px">🔄 Iteratie — het levend systeem</h2><p class="sub">Discipline moet meebewegen met het leven. Je systeem itereert niet hier in een veld, maar in de praktijk: je <b>wekelijkse review</b> onder Spiegel. Eén verbetering per week is genoeg.</p>';
   wrap.appendChild(itc);
   updateFoundationProgress();
 }
@@ -2087,21 +2126,23 @@ function contractActs(c){ if(!c||!c.habitIds) return []; return activeHabits().f
 function votesFor(c){ if(!c) return 0; const ids=c.habitIds||[]; if(!ids.length) return 0; let n=0;
   Object.keys(DB.logs).forEach(function(k){ const l=DB.logs[k]; if(l&&l.habits){ ids.forEach(function(id){ if(l.habits[id]) n++; }); } }); return n; }
 function votesToday(c){ if(!c) return 0; const ids=c.habitIds||[]; const l=DB.logs[TODAY]; if(!l||!l.habits) return 0; return ids.filter(function(id){return l.habits[id];}).length; }
+function logContract(action, statement){ DB.contract_log=DB.contract_log||[]; DB.contract_log.push({action:action, statement:(statement||"").trim(), at:new Date().toISOString()}); }
 function signContract(statement, name){
   statement=(statement||"").trim();
   if(statement.length<6){ toast("Schrijf eerst je identiteit uit"); return; }
   (DB.contracts||[]).forEach(function(c){ c.active=false; });
   const allIds=activeHabits().map(function(h){return h.id;});
   DB.contracts.push({ id:"ct"+Date.now(), statement:statement, signedBy:(name||"").trim(), signedAt:new Date().toISOString(), active:true, habitIds:allIds, history:[] });
+  logContract("Getekend", statement);
   save(); toast("Getekend ✓ — je bent begonnen"); renderContractCard(); renderRitual();
 }
 function reviseContract(c, statement){
   statement=(statement||"").trim(); if(statement.length<6){ toast("Schrijf eerst je identiteit uit"); return; }
-  if(c.statement && c.statement!==statement){ c.history=c.history||[]; c.history.push({statement:c.statement, until:new Date().toISOString()}); }
+  if(c.statement && c.statement!==statement){ c.history=c.history||[]; c.history.push({statement:c.statement, until:new Date().toISOString()}); logContract("Herzien", statement); }
   c.statement=statement; c.signedAt=new Date().toISOString();
   save(); toast("Opnieuw getekend ✓"); renderContractCard(); renderRitual();
 }
-function newContract(){ if(confirm("Nieuw contract starten?\n\nJe huidige contract wordt gearchiveerd; je stemmen-historie blijft bewaard.")){ (DB.contracts||[]).forEach(function(c){ c.active=false; }); save(); renderContractCard(); renderRitual(); } }
+function newContract(){ if(confirm("Nieuw contract starten?\n\nJe huidige contract wordt gearchiveerd; je stemmen-historie blijft bewaard.")){ (DB.contracts||[]).forEach(function(c){ if(c.active) logContract("Gearchiveerd", c.statement); c.active=false; }); save(); renderContractCard(); renderRitual(); } }
 function toggleContractAct(c, habitId){ c.habitIds=c.habitIds||[]; const i=c.habitIds.indexOf(habitId); if(i>=0) c.habitIds.splice(i,1); else c.habitIds.push(habitId); save(); renderContractCard(); renderRitual(); }
 function castVote(habitId){
   const l=dayLog(TODAY); l.habits=l.habits||{}; const wasOn=!!l.habits[habitId];
@@ -2131,7 +2172,7 @@ async function generateIntentions(c){
   try{
     const w=latestWeekReview(); let ctx='Identiteit: "'+c.statement+'"';
     if(w){ ctx+="\nLaatste weekreflectie — wins: "+(w.wins||"-")+"; obstakels: "+(w.obst||"-")+"; aanpassing: "+(w.adj||"-"); }
-    const prompt="Op basis van deze identiteit en laatste weekreflectie: geef 3 korte, concrete focus-intenties voor vandaag, elk beginnend met 'Vandaag kies ik om', maximaal 12 woorden, in het Nederlands. Antwoord UITSLUITEND met een JSON-array van 3 strings, zonder uitleg.\n\n"+ctx;
+    const prompt=AI_VOICE+"\n\nGeef op basis van deze identiteit en laatste weekreflectie 3 korte, concrete focus-intenties voor vandaag, elk beginnend met 'Vandaag kies ik om', maximaal 12 woorden. Antwoord UITSLUITEND met een JSON-array van 3 strings, zonder uitleg.\n\n"+ctx;
     const txt=await aiComplete(prompt, 300);
     const opts=parseAffirmList(txt);
     intentState.loading=false;
@@ -2214,13 +2255,21 @@ function renderContractCard(){
     const t=document.createElement("div"); t.style.cssText="font-size:14px"; t.textContent=shortName(h.name);
     row.appendChild(cb); row.appendChild(t); cc.appendChild(row);
   });
+  const log=(DB.contract_log||[]);
+  if(log.length){
+    cc.insertAdjacentHTML("beforeend",'<div class="section-label" style="margin:16px 0 6px">Logboek</div>');
+    log.slice().reverse().slice(0,8).forEach(function(e){
+      const d=new Date(e.at); const when=d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear();
+      cc.insertAdjacentHTML("beforeend",'<div class="law"><b style="white-space:nowrap">'+esc(e.action)+'</b><span><span style="color:var(--muted)">'+when+'</span>'+(e.statement?' · '+esc(e.statement):'')+'</span></div>');
+    });
+  }
 }
 
 /* ---------- De Spiegel (Sprint 2) ---------- */
 let mirrorState={loading:"", error:""};   // loading: "" | "letter" | "evolve"
 async function aiComplete(prompt, maxTokens){
   const c=aiCfg();
-  if(!c.key||!c.key.trim()) throw new Error("Geen API-sleutel — zet AI aan onder Instrumenten");
+  if(!c.key||!c.key.trim()) throw new Error("Geen API-sleutel — zet AI aan onder Instellingen");
   const res=await fetch("https://api.anthropic.com/v1/messages",{
     method:"POST",
     headers:{ "content-type":"application/json", "x-api-key":c.key.trim(), "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
@@ -2305,7 +2354,7 @@ async function generateFutureLetter(c){
   if(mirrorState.loading) return;
   mirrorState.loading="letter"; mirrorState.error=""; renderMirror();
   try{
-    const prompt="Schrijf in het Nederlands een korte, warme maar eerlijke brief (max 140 woorden) van de toekomstige zelf van deze persoon aan wie hij nu is. De toekomstige zelf heeft de onderstaande identiteit volledig belichaamd. Spreek in 'ik' (de toekomstige zelf) en 'jij' (het huidige zelf). Geen clich\u00e9s, geen opsomming — \u00e9\u00e9n doorlopende, persoonlijke brief.\n\nPROFIEL:\n"+mirrorContext(c);
+    const prompt=AI_VOICE+"\n\nSchrijf een korte, warme maar eerlijke brief (max 140 woorden) van de toekomstige zelf van deze persoon aan wie hij nu is. De toekomstige zelf heeft de onderstaande identiteit volledig belichaamd. Spreek in 'ik' (de toekomstige zelf) en 'jij' (het huidige zelf). Geen opsomming — één doorlopende, persoonlijke brief die klinkt alsof een ouder, wijzer iemand je echt kent.\n\nPROFIEL:\n"+mirrorContext(c);
     const txt=await aiComplete(prompt, 500);
     contractMirror(c).futureLetter=txt; mirrorState.loading=""; save(); renderMirror(); toast("✨ Brief geschreven");
   }catch(e){ mirrorState.loading=""; mirrorState.error=(e&&e.message)?String(e.message).slice(0,140):"Mislukt"; renderMirror(); }
@@ -2315,7 +2364,7 @@ async function evolveStatement(c){
   if(votesFor(c)===0){ toast("Verzamel eerst wat bewijs (stemmen)"); return; }
   mirrorState.loading="evolve"; mirrorState.error=""; renderMirror();
   try{
-    const prompt="Je bent een eerlijke spiegel, geen cheerleader. Op basis van het bewijs hieronder: herschrijf de identiteitsverklaring van deze persoon zoals die nu, gezien zijn daden, wáár is. Benoem zowel wat het bewijs bevestigt als waar de breuklijn zit (waar hij nog niet consequent is). Max 60 woorden, in het Nederlands, eerste persoon ('Ik ...'). Toon, motiveer niet. Antwoord met alleen de herschreven verklaring, zonder inleiding.\n\nPROFIEL:\n"+mirrorContext(c);
+    const prompt=AI_VOICE+"\n\nJe bent hier een eerlijke spiegel, geen cheerleader. Herschrijf op basis van het bewijs hieronder de identiteitsverklaring van deze persoon zoals die nu, gezien zijn daden, wáár is. Benoem zowel wat het bewijs bevestigt als waar de breuklijn zit (waar hij nog niet consequent is). Max 60 woorden, eerste persoon ('Ik ...'). Toon, motiveer niet. Antwoord met alleen de herschreven verklaring, zonder inleiding.\n\nPROFIEL:\n"+mirrorContext(c);
     const txt=await aiComplete(prompt, 300);
     const m=contractMirror(c); m.currentStatement=txt; m.evolvedAt=new Date().toISOString();
     mirrorState.loading=""; save(); renderMirror(); toast("✨ Spiegel bijgewerkt");
@@ -2420,7 +2469,23 @@ const TITLES={ritual:"Ritueel",spiegel:"De Spiegel",ontwerp:"Ontwerp",inzicht:"I
 function renderOntwerp(){ renderIdentityCard(); renderGoalsCard(); renderFoundation(); renderHabitDefs(); renderContractCard(); }
 function renderInzicht(){ renderDash(); }
 function renderSpiegelTab(){ renderMirror(); renderWeek(); }
-function renderInstellingen(){ renderReminderUI(); renderAffirmEditor(); renderAiSettings(); renderBackupNote(); }
+function renderInstellingen(){ renderFeedbackSettings(); renderReminderUI(); renderAffirmEditor(); renderAiSettings(); renderBackupNote(); }
+function renderFeedbackSettings(){
+  const c=document.getElementById("feedbackCard"); if(!c) return;
+  const s=DB.settings||(DB.settings={}); c.innerHTML="";
+  c.insertAdjacentHTML("beforeend",'<p class="sub" style="margin:0 0 8px">Een afgevinkte daad mag voelbaar zijn — bevredigend gedrag herhaal je. Subtiel, geen circus.</p>');
+  function toggle(label, key){
+    const wrap=document.createElement("div"); wrap.className="toggle";
+    wrap.innerHTML='<span style="font-size:14px;font-weight:600">'+label+'</span>';
+    const sw=document.createElement("label"); sw.className="switch";
+    const inp=document.createElement("input"); inp.type="checkbox"; inp.checked=(s[key]!==false);
+    const sl=document.createElement("span"); sl.className="slider"; sw.appendChild(inp); sw.appendChild(sl); wrap.appendChild(sw);
+    inp.addEventListener("change",function(e){ s[key]=e.target.checked; save(); if(e.target.checked) feedbackTick(); });
+    c.appendChild(wrap);
+  }
+  toggle("Zacht geluid bij afvinken","feedbackSound");
+  toggle("Trilling bij afvinken","feedbackHaptic");
+}
 function switchTab(name){
   document.querySelectorAll(".space").forEach(function(s){s.classList.remove("active");});
   const el=document.querySelector('.space[data-space="'+name+'"]'); if(el) el.classList.add("active");
